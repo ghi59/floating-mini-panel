@@ -66,4 +66,4 @@ Simply enable Floating Mini Panel via QuickSettings menu and place it very you p
 
 ## License & Terms
 
-Floating Mini Panel is available under the terms of the GPL-v2 or later license. See [LICENSE](https://github.com/ghi59/floating-min-panel/blob/master/LICENSE) for details.
+Floating Mini Panel is available under the terms of the GPL-v2 or later license. See [LICENSE](https://github.com/ghi59/floating-mini-panel/blob/master/LICENSE) for details.
