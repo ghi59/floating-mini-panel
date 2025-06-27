@@ -218,7 +218,11 @@ const FloatingMiniPanel = GObject.registerClass(
                         case 3:
                             // Hide this for 5 sec.
                             this.hide();
-                            GLib.timeout_add(
+                            if (this._timeoutId) {
+                                GLib.Source.remove(this._timeoutId);
+                                this._timeoutId = null;
+                            }
+                            this._timeoutId = GLib.timeout_add(
                                 GLib.PRIORITY_DEFAULT,
                                 5000,
                                 () => {
@@ -505,6 +509,11 @@ const FloatingMiniPanel = GObject.registerClass(
         }
 
         destroy() {
+            if (this._timeoutId) {
+                GLib.Source.remove(this._timeoutId);
+                this._timeoutId = null;
+            }
+            
             this._cloneInds = null;
             this._orgInds = null;
             this._dateConId = null;
