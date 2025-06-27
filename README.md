@@ -56,7 +56,7 @@ Working most of the time with Laptops, every inch of display space is important.
 
 ### Usage
 
-Simply enable Floating Mini Panel via QuickSettings menu and place it very you prefer.
+Simply enable Floating Mini Panel via QuickSettings menu and place it where you prefer.
 
 
 
