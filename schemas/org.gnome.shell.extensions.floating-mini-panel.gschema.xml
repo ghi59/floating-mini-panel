@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schemalist>
+  <schema path="/org/gnome/shell/extensions/floating-mini-panel/" id="org.gnome.shell.extensions.floating-mini-panel">
+    <key name="state" type="i">
+      <default>1</default>
+      <summary>Panel State</summary>
+      <description>
+        0 = Off, 1 = On
+      </description>
+    </key>
+    <key name="pos-x" type="i">
+      <default>0</default>
+      <summary>X Position</summary>
+      <description>
+        Horizontal Position of floating-mini-panel.
+      </description>
+    </key>
+    <key name="pos-y" type="i">
+      <default>0</default>
+      <summary>Y Position</summary>
+      <description>
+        Vertical Position of floating-mini-panel.
+      </description>
+    </key>
+    <key name="aligned" type="b">
+      <default>false</default>
+      <summary>Right Aligned</summary>
+      <description>
+        Is floating-mini-panel right aligned.
+      </description>
+    </key>
+  </schema>
+</schemalist>

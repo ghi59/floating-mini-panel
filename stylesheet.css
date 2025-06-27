@@ -1,0 +1,28 @@
+
+#FloatingMiniPanel {
+  height: 30px;
+  padding: 2px 2px;
+}
+
+#FloatingMiniPanel .system-status-icon {
+  width: 24px;
+  padding: 7px 0px;
+}
+
+#ctlBtn {
+  padding: 0px 2px;
+}
+
+#dateBtn, #quickBtn {
+  padding: 0px 8px;
+}
+
+#dateBtn .messages-indicator {
+  width: 16px;
+  padding: 7px 0px;
+}
+
+.popup-menu.panel-menu {
+  margin-bottom: 0;
+}
+
