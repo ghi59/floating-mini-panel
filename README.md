@@ -2,7 +2,7 @@
 
 ## Introduction
 
-![Screenshot from 2024-09-28 18-21-00](/home/geri/Projects/floating-mini-panel@ghi59.github.com/img/Floating-Mini-Panel-Dark.png) ![](/home/geri/Projects/floating-mini-panel@ghi59.github.com/img/Floating-Mini-Panel-Light.png)
+![Screenshot from 2024-09-28 18-21-00](img/Floating-Mini-Panel-Dark.png) ![](img/Floating-Mini-Panel-Light.png)
 
 Floating Mini Panel replaces the Gnome Main Panel with a movable and always-on-top`Mini Panel` with just the DateMenu and QuickSettings. Both menus are fully functional and behave like expected. The `Mini Panel`can be moved anywhere on the desktop by dragging it with the handle button. It will align itself, when dragged over screen edges. A click on the handle button will show AppGrid together with the Gnome Main Panel. To reach obscured window or desktop elements it can be hidden for 5 seconds by right clicking the handle button, or simply moved out of the way.
 
