@@ -36,7 +36,7 @@ Floating Mini Panel replaces the Gnome Main Panel with a movable and always-on-t
 
 ## Installation
 
-Get the latest release from [https://extensions.gnome.org/extension/xxxx/floating-mini-panel/](GNOME Extensions)
+Get the latest release from [GNOME Extensions](https://extensions.gnome.org/extension/xxxx/floating-mini-panel/)
 
 
 
@@ -66,4 +66,4 @@ Simply enable Floating Mini Panel via QuickSettings menu and place it very you p
 
 ## License & Terms
 
-Floating Mini Panel is available under the terms of the GPL-v2 or later license. See [https://github.com/ghi59/floating-min-panel/blob/master/LICENSE](License) for details.
+Floating Mini Panel is available under the terms of the GPL-v2 or later license. See [LICENSE](https://github.com/ghi59/floating-min-panel/blob/master/LICENSE) for details.
