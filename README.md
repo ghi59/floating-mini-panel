@@ -47,11 +47,9 @@ Simply enable Floating Mini Panel via QuickSettings menu and place it where you 
 
 There are two modes of operation, which you can activate in the QuickToggle menu of the `Mini Panel` in QuickSettings. Selecting a mode will automatically enable the `Mini Panel` if it was disabled.
 
-1. Permanent Mode
-  If permant mode is enabled, the Main Panel will be permanetly (with the exception of Overview) hidden and the `Mini Panel` shown instead.
+1. Permanent Mode: If permant mode is enabled, the Main Panel will be permanetly (with the exception of Overview) hidden and the `Mini Panel` shown instead.
   
-2. Automatic Mode
-  In automatic mode the `Mini Panel` will only be shown, if the Main Panel is hidden. There are several ways to hide the Main Panel:
+2. Automatic Mode: In automatic mode the `Mini Panel` will only be shown, if the Main Panel is hidden. There are several ways to hide the Main Panel:
   
   | 3rd Party Extension | Actions | Settings |
   | --- | --- | --- |
@@ -109,8 +107,7 @@ This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Nei
 
 ### Known Problems
 
-- When enabling/disabling extensions and/or changing settings and in rare cases e.g. after System Suspend this extension could get out-of-sync in automatic mode!
-  **Solution**: Simply open Overview and close it again to resync.
+- When enabling/disabling extensions and/or changing settings and in rare cases e.g. after System Suspend this extension could get out-of-sync in automatic mode! **Solution**: Simply open Overview and close it again to resync.
 
 ---
 
