@@ -69,27 +69,29 @@ This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Nei
 
 1. What is changed in all modes:
   
-  - The `Mini Panel` is added (TopChrome) to the system.
+   - The `Mini Panel` is added (TopChrome) to the system.
     
-  - Unredirection is disabled.
+   - Unredirection is disabled.
     
-  - Custom Hotkey Handlers for DateMenu and Quicksettings menus.
+   - Custom Hotkey Handlers for DateMenu and Quicksettings menus.
     
-  - SourceActor for DateMenu and Quicksettings menus.
+   - SourceActor for DateMenu and Quicksettings menus.
     
-  - ArrowAlignment for DateMenu and Quicksettings menus.
+   - ArrowAlignment for DateMenu and Quicksettings menus.
     
-  - Bottom padding for menus (globally via CSS).
+   - Bottom padding for menus (globally via CSS).
+
     
 2. What is changed additionally in permanent mode:
   
-  - PanelBox is moved out of the visible screen area and vice versa.
+   - PanelBox is moved out of the visible screen area and vice versa.
     
-  - Panel is hidden respectively shown.
+   - Panel is hidden respectively shown.
+
     
 3. What is changed additionally in automatic mode:
   
-  - Nothing.
+   - Nothing.
 
 ---
 
