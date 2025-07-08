@@ -57,8 +57,8 @@ There are two modes of operation, which you can activate in the QuickToggle menu
   | --- | --- | --- |
   | w/o | Fullscreen (F11) | w/o |
   | PaperWM | Switch workspaces | Hide Top Panel per workspace |
-  | Hide Top Panel | - Doge window to Main Panel<br/>- Maximze window<br/>- Fullscreen (F11)<br/>- Reveal/Hide Main Panel | Intelli-Hide |
-  | Dash To Panel | - Doge window to Main Panel<br/>- Maximze window<br/>- Fullscreen (F11)<br/>- Reveal/Hide Main Panel | Intelli-Hide |
+  | Hide Top Panel | - Dodge window to Main Panel<br/>- Maximze window<br/>- Fullscreen (F11)<br/>- Reveal/Hide Main Panel | Intelli-Hide |
+  | Dash To Panel | - Dodge window to Main Panel<br/>- Maximze window<br/>- Fullscreen (F11)<br/>- Reveal/Hide Main Panel | Intelli-Hide |
   
 
 ---
