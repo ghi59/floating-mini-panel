@@ -24,10 +24,12 @@ import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import Meta from 'gi://Meta';
 import Mtk from 'gi://Mtk';
+import Shell from 'gi://Shell';
 import St from 'gi://St';
 
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as QuickSettings from 'resource:///org/gnome/shell/ui/quickSettings.js';
 
 const LAYOUTMANAGER = Main.layoutManager;
@@ -45,7 +47,6 @@ const QUICKARROWALIGNMENT = QUICKSETTINGS.menu._arrowAlignment;
 const State = {
     OFF: 0,
     ON: 1,
-    // For future features!
     AUTO: 2,
 };
 
@@ -172,26 +173,95 @@ const FloatingMiniPanel = GObject.registerClass(
             this._fmpQuickToggle = new QuickSettings.QuickMenuToggle({
                 icon_name: 'view-restore-symbolic',
                 title: 'Mini Panel',
-                menu_enabled: false,
+                menu_enabled: true,
                 toggleMode: true,
             });
 
-            this._fmpQuickToggle.checked = this._state; // Make a binding :-)
+            // START CODE AUTO MODE
+            this._fmpQuickToggle.menu.setHeader(
+                'view-restore-symbolic',
+                'Mini Panel',
+                null
+            );
+
+            this._autoItem = new PopupMenu.PopupImageMenuItem(
+                'Automatic',
+                null
+            );
+            this._fmpQuickToggle.menu.addMenuItem(this._autoItem);
+            this._autoItem.connect('activate', () => {
+                QUICKSETTINGS.menu.close();
+                this._permItem.setOrnament(PopupMenu.Ornament.NONE);
+                this._autoItem.setOrnament(PopupMenu.Ornament.CHECK);
+                this._fmpQuickToggle.subtitle = this._autoItem.label.text;
+                this._fmpQuickToggle.checked = true;
+                if (this.visible) this._hideFloatingMiniPanel();
+
+                this._state = State.AUTO;
+                this._sets.set_int('state', this._state);
+
+                let priMon = DISPLAY.get_primary_monitor();
+                let priMonGeo = DISPLAY.get_monitor_geometry(priMon);
+                if (
+                    PANELBOX.y < priMonGeo.y ||
+                    Math.abs(PANELBOX.translation_y) === PANELBOX.height ||
+                    Math.abs(PANELBOX.translation_x) === PANELBOX.width
+                ) {
+                    this._showFloatingMiniPanel();
+                }
+                if (this.visible || PANELBOX.visible) QUICKSETTINGS.menu.open();
+            });
+
+            this._permItem = new PopupMenu.PopupImageMenuItem(
+                'Permanent',
+                null
+            );
+            this._fmpQuickToggle.menu.addMenuItem(this._permItem);
+            this._permItem.connect('activate', () => {
+                QUICKSETTINGS.menu.close();
+                this._permItem.setOrnament(PopupMenu.Ornament.CHECK);
+                this._autoItem.setOrnament(PopupMenu.Ornament.NONE);
+                this._fmpQuickToggle.subtitle = this._permItem.label.text;
+                this._fmpQuickToggle.checked = true;
+
+                this._state = State.ON;
+                this._sets.set_int('state', this._state);
+
+                if (!OVERVIEW.visible) this._showFloatingMiniPanel();
+                if (this.visible || PANELBOX.visible) QUICKSETTINGS.menu.open();
+            });
+
+            // Initialize menu
+            if (this._state === State.AUTO) {
+                this._fmpQuickToggle.subtitle = this._autoItem.label.text;
+                this._permItem.setOrnament(PopupMenu.Ornament.NONE);
+                this._autoItem.setOrnament(PopupMenu.Ornament.CHECK);
+            } else {
+                this._fmpQuickToggle.subtitle = this._permItem.label.text;
+                this._permItem.setOrnament(PopupMenu.Ornament.CHECK);
+                this._autoItem.setOrnament(PopupMenu.Ornament.NONE);
+            }
 
             this._fmpQuickToggle.connect('clicked', () => {
                 QUICKSETTINGS.menu.close();
-                if (this._state === State.ON) {
+                if (this._state !== State.OFF) {
                     this._hideFloatingMiniPanel();
                     this._state = State.OFF;
                     this._sets.set_int('state', this._state);
                 } else {
-                    this._showFloatingMiniPanel();
-                    this._state = State.ON;
+                    if (this._autoItem.ornament === PopupMenu.Ornament.CHECK) {
+                        this._state = State.AUTO;
+                    } else {
+                        this._state = State.ON;
+                        this._showFloatingMiniPanel();
+                    }
                     this._sets.set_int('state', this._state);
                 }
-                QUICKSETTINGS.menu.open();
+                if (this.visible || PANELBOX.visible) QUICKSETTINGS.menu.open();
             });
+            // END CODE AUTO MODE
 
+            this._fmpQuickToggle.checked = this._state; // Make a binding :-)
             this._fmpQuickIndicator = new QuickSettings.SystemIndicator();
             this._fmpQuickIndicator.quickSettingsItems.push(
                 this._fmpQuickToggle
@@ -218,15 +288,21 @@ const FloatingMiniPanel = GObject.registerClass(
                         case 3:
                             // Hide this for 5 sec.
                             this.hide();
-                            if (this._timeoutId) {
-                                GLib.Source.remove(this._timeoutId);
-                                this._timeoutId = null;
+                            if (this._timeoutId1) {
+                                GLib.Source.remove(this._timeoutId1);
+                                this._timeoutId1 = null;
                             }
-                            this._timeoutId = GLib.timeout_add(
+                            this._timeoutId1 = GLib.timeout_add(
                                 GLib.PRIORITY_DEFAULT,
                                 5000,
                                 () => {
-                                    if (!OVERVIEW.visible) this.show();
+                                    if (
+                                        (!PANELBOX.visible &&
+                                            !OVERVIEW.visible) ||
+                                        this._state === State.ON
+                                    )
+                                        this.show();
+                                    this._timeoutId1 = null;
                                     return GLib.SOURCE_REMOVE;
                                 }
                             );
@@ -287,6 +363,63 @@ const FloatingMiniPanel = GObject.registerClass(
             });
 
             // FloatingMiniPanel Controlling -----------------------------------
+
+            // START CODE AUTO MODE
+            this._pvConId = PANELBOX.connect('notify::visible', () => {
+                if (this._state === State.AUTO) {
+                    if (!PANELBOX.visible) {
+                        if (this._correctPanelBoxVisibleState) {
+                            this._correctPanelBoxVisibleState = false;
+                        } else {
+                            if (!this.visible) {
+                                this._showFloatingMiniPanel();
+                            }
+                        }
+                    } else {
+                        // Timeout and testing needed because transitions are
+                        // used by 'HideTopPanel' and 'DashToPanel' and
+                        // PanelBox.visible signal by itself is not sufficiant
+                        // to decide if the PanelBox is really shown or not!
+                        if (this._timeoutId2) {
+                            GLib.Source.remove(this._timeoutId2);
+                            this._timeoutId2 = null;
+                        }
+                        // A timeout of 50ms seams ok, but has to be verified.
+                        this._timeoutId2 = GLib.timeout_add(
+                            GLib.PRIORITY_DEFAULT,
+                            50,
+                            () => {
+                                // Test 'HideTopPanel' / 'DashToPanel' show Panelbox
+                                let priMon = DISPLAY.get_primary_monitor();
+                                let priMonGeo =
+                                    DISPLAY.get_monitor_geometry(priMon);
+                                if (
+                                    (PANELBOX.y >
+                                        priMonGeo.y - PANELBOX.height &&
+                                        Math.abs(PANELBOX.translation_y) <
+                                            PANELBOX.height &&
+                                        Math.abs(PANELBOX.translation_x) <
+                                            PANELBOX.width) ||
+                                    OVERVIEW.visible
+                                ) {
+                                    if (this._correctPanelBoxVisibleState) {
+                                        this._correctPanelBoxVisibleState = false;
+                                    }
+                                    this._hideFloatingMiniPanel();
+                                } else {
+                                    // Correct unwanted PanelBox visible signal!
+                                    PANELBOX.visible = false;
+                                    this._correctPanelBoxVisibleState = true;
+                                }
+                                this._timeoutId2 = null;
+                                return GLib.SOURCE_REMOVE;
+                            }
+                        );
+                    }
+                }
+            });
+            // END CODE AUTO MODE
+
             this._nwConId = this.connect('notify::width', () => {
                 GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
                     if (this.visible) this._realign();
@@ -322,7 +455,7 @@ const FloatingMiniPanel = GObject.registerClass(
                 return GLib.SOURCE_REMOVE;
             });
 
-            // Hack to close QuickSettings menu when PowerToggle is clicked.
+            // Close QuickSettings menu when PowerToggle is clicked.
             this._ptConId1 =
                 QUICKSETTINGS._system._systemItem._powerToggle.connect(
                     'clicked',
@@ -331,7 +464,7 @@ const FloatingMiniPanel = GObject.registerClass(
                     }
                 );
 
-            // Hack to close QuickSettings menu when SettingsItem is clicked.
+            // Close QuickSettings menu when SettingsItem is clicked.
             let childs =
                 QUICKSETTINGS._system._systemItem.firstChild.get_children();
             for (let child of childs) {
@@ -347,13 +480,31 @@ const FloatingMiniPanel = GObject.registerClass(
                 }
             }
 
-            // Hack to close QuickSettings menu when Shutdown-Suspend is clicked.
+            // Close QuickSettings menu when Shutdown-Suspend is clicked.
             this._simConId3 = QUICKSETTINGS._system._systemItem.menu.connect(
                 'activate',
                 () => {
                     QUICKSETTINGS.menu.close();
                 }
             );
+
+            // START CODE MENU HOTKEYS
+            Main.wm.setCustomKeybindingHandler(
+                'toggle-message-tray',
+                Shell.ActionMode.NORMAL |
+                    Shell.ActionMode.OVERVIEW |
+                    Shell.ActionMode.POPUP,
+                this._toggleCalendar.bind(this)
+            );
+
+            Main.wm.setCustomKeybindingHandler(
+                'toggle-quick-settings',
+                Shell.ActionMode.NORMAL |
+                    Shell.ActionMode.OVERVIEW |
+                    Shell.ActionMode.POPUP,
+                this._toggleQuickSettings.bind(this)
+            );
+            // END CODE MENU HOTKEYS
 
             // Complete startup
             LAYOUTMANAGER.addTopChrome(this, {trackFullscreen: false});
@@ -363,30 +514,85 @@ const FloatingMiniPanel = GObject.registerClass(
             }
         }
 
+        // FloatingMiniPanel Procedures ----------------------------------------
+
+        // START CODE MENU HOTKEYS
+        _toggleCalendar() {
+            if (this.visible || PANELBOX.visible) {
+                DATEMENU.menu.toggle();
+                if (DATEMENU.menu.isOpen) {
+                    DATEMENU.menu.actor.navigate_focus(
+                        null,
+                        St.DirectionType.TAB_FORWARD,
+                        false
+                    );
+                }
+            }
+        }
+
+        _toggleQuickSettings() {
+            if (this.visible || PANELBOX.visible) {
+                QUICKSETTINGS.menu.toggle();
+                if (QUICKSETTINGS.menu.isOpen) {
+                    QUICKSETTINGS.menu.actor.navigate_focus(
+                        null,
+                        St.DirectionType.TAB_FORWARD,
+                        false
+                    );
+                }
+            }
+        }
+        // END CODE MENU HOTKEYS
+
         _showFloatingMiniPanel() {
-            PANEL.visible = false;
-            let priMon = DISPLAY.get_primary_monitor();
-            let priMonGeo = DISPLAY.get_monitor_geometry(priMon);
-            PANELBOX.set_position(priMonGeo.x, -PANELBOX.height);
+            if (this._state !== State.AUTO) {
+                PANEL.visible = false;
+                let priMon = DISPLAY.get_primary_monitor();
+                let priMonGeo = DISPLAY.get_monitor_geometry(priMon);
+                PANELBOX.set_position(priMonGeo.y, -PANELBOX.height);
+            }
+
             DATEMENU.menu.sourceActor = this._dateBtn;
             DATEMENU.menu._arrowAlignment = 0.5;
             QUICKSETTINGS.menu.sourceActor = this._quickBtn;
             QUICKSETTINGS.menu._arrowAlignment = 0.5;
+
+            this.remove_all_transitions();
+            this.opacity = 0;
             this.visible = true;
-            // Let maximized windows grow
-            LAYOUTMANAGER.emit('monitors-changed');
+            this.ease({
+                opacity: 255,
+                duration: 250,
+                mode: Clutter.AnimationMode.EASE_LINEAR,
+                onComplete: () => {},
+            });
         }
 
         _hideFloatingMiniPanel() {
+            /*
+            this.remove_all_transitions();
+            this.opacity = 255;
+            this.ease({
+                opacity: 0,
+                duration: 250,
+                mode: Clutter.AnimationMode.EASE_LINEAR,
+                onComplete: () => {
+                    this.visible = false;
+                }
+            });
+*/
             this.visible = false;
             DATEMENU.menu.sourceActor = DATESOURCEACTOR;
             DATEMENU.menu._arrowAlignment = DATEARROWALIGNMENT;
             QUICKSETTINGS.menu.sourceActor = QUICKSOURCEACTOR;
             QUICKSETTINGS.menu._arrowAlignment = QUICKARROWALIGNMENT;
-            let priMon = DISPLAY.get_primary_monitor();
-            let priMonGeo = DISPLAY.get_monitor_geometry(priMon);
-            PANELBOX.set_position(priMonGeo.x, priMonGeo.y);
-            PANEL.visible = true;
+
+            if (this._state !== State.AUTO) {
+                let priMon = DISPLAY.get_primary_monitor();
+                let priMonGeo = DISPLAY.get_monitor_geometry(priMon);
+                PANELBOX.set_position(priMonGeo.y, priMonGeo.y);
+                PANEL.visible = true;
+            }
         }
 
         _realign() {
@@ -405,6 +611,10 @@ const FloatingMiniPanel = GObject.registerClass(
                 rect.x = geom.x + geom.width - rect.width;
                 this.set_position(rect.x, rect.y);
                 this._sets.set_int('pos-x', rect.x);
+            } else {
+                // If this is located close to the screen edge with
+                // 'aligned' set to false and growing over the edge.
+                this._relocate(true);
             }
         }
 
@@ -509,16 +719,45 @@ const FloatingMiniPanel = GObject.registerClass(
         }
 
         destroy() {
-            if (this._timeoutId) {
-                GLib.Source.remove(this._timeoutId);
-                this._timeoutId = null;
-            }
-            
+            this._hideFloatingMiniPanel();
+
             this._cloneInds = null;
             this._orgInds = null;
             this._dateConId = null;
             this._noteConId1 = null;
             this._noteConId2 = null;
+
+            // START CODE MENU HOTKEYS
+            Main.wm.setCustomKeybindingHandler(
+                'toggle-message-tray',
+                Shell.ActionMode.NORMAL |
+                    Shell.ActionMode.OVERVIEW |
+                    Shell.ActionMode.POPUP,
+                Main.wm._toggleCalendar.bind(Main.wm)
+            );
+            Main.wm.setCustomKeybindingHandler(
+                'toggle-quick-settings',
+                Shell.ActionMode.NORMAL |
+                    Shell.ActionMode.OVERVIEW |
+                    Shell.ActionMode.POPUP,
+                Main.wm._toggleQuickSettings.bind(Main.wm)
+            );
+            // END CODE MENU HOTKEYS
+
+            if (this._timeoutId1) {
+                GLib.Source.remove(this._timeoutId1);
+                this._timeoutId1 = null;
+            }
+
+            // START CODE AUTO MODE
+            if (this._timeoutId2) {
+                GLib.Source.remove(this._timeoutId2);
+                this._timeoutId2 = null;
+            }
+
+            PANELBOX.disconnect(this._pvConId);
+            this._pvConId = null;
+            // END CODE AUTO MODE
 
             this.disconnect(this._nwConId);
             this._nwConId = null;
@@ -557,13 +796,6 @@ const FloatingMiniPanel = GObject.registerClass(
             );
             this._fmpQuickIndicator.destroy();
             this._fmpQuickIndicator = null;
-
-            this.visible = false;
-            let priMon = DISPLAY.get_primary_monitor();
-            let priMonGeo = DISPLAY.get_monitor_geometry(priMon);
-            PANELBOX.set_position(priMonGeo.x, priMonGeo.y);
-            PANELBOX.visible = true;
-            PANEL.visible = true;
 
             LAYOUTMANAGER.removeChrome(this);
             global.compositor.enable_unredirect();
