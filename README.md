@@ -55,9 +55,10 @@ There are two modes of operation, which you can activate in the QuickToggle menu
   | --- | --- | --- |
   | w/o | Fullscreen (F11) | w/o |
   | PaperWM | Switch workspaces | Hide Top Panel per workspace |
-  | Hide Top Panel | - Dodge window to Main Panel<br/>- Maximze window<br/>- Fullscreen (F11)<br/>- Reveal/Hide Main Panel | Intelli-Hide |
+  | Hide Top Bar | - Dodge window to Main Panel<br/>- Maximze window<br/>- Fullscreen (F11)<br/>- Reveal/Hide Main Panel | Intelli-Hide |
   | Dash To Panel | - Dodge window to Main Panel<br/>- Maximze window<br/>- Fullscreen (F11)<br/>- Reveal/Hide Main Panel | Intelli-Hide |
-  
+
+**Tip**: To disable the revealing of Main Panel by mouse, disable `Show panel when mouse approaches edge of screen` for 'Hide Top Bar' and/or set  `Required pressure threshold (px)`to `9990` for 'Dash To Panel'.
 
 ---
 
@@ -107,7 +108,9 @@ This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Nei
 
 ### Known Problems
 
-- When enabling/disabling extensions and/or changing settings and in rare cases e.g. after System Suspend this extension could get out-of-sync in automatic mode! **Solution**: Simply open Overview and close it again to resync.
+| Problem | Solution |
+| --- | --- |
+| When enabling/disabling extensions and/or changing settings and in rare cases e.g. after System Suspend this extension could get out-of-sync in automatic mode | Simply open Overview and close it again to resync |
 
 ---
 
