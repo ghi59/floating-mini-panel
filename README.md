@@ -99,7 +99,7 @@ This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Nei
 | Feature | Status |
 | --- | --- |
 | Stand-alone Automatic Mode (w/o 3rd party extensions) | planned |
-| Present 3rd party indicators (Bartender Style MacOS) | Coding ongoing, prototyp finished |
+| Present 3rd party indicators (Bartender Style MacOS) | Coding finished, Testing ongoing, available in Version 4 |
 | Favorites menu via middle click on handle button | Not neccessary anymore, if 3rd party indicators are available in `Mini Panel`  |
 | QuickSettings scroll actions (Volume, Caffeine, etc) | Coding finished, Testing ongoing, available in Version 4 |
 | Theming (Icon- & Font-Size, Spacing, etc.) | open |
