@@ -5,7 +5,7 @@
       <default>1</default>
       <summary>Panel State</summary>
       <description>
-        0 = Off, 1 = On, 2 = Auto
+        0 = Off, 1 = On, 2 = Auto 
       </description>
     </key>
     <key name="pos-x" type="i">
@@ -27,6 +27,20 @@
       <summary>Right Aligned</summary>
       <description>
         Is floating-mini-panel right aligned.
+      </description>
+    </key>
+    <key name="open" type="b">
+      <default>false</default>
+      <summary>Drawer opened</summary>
+      <description>
+        Is 3rd party indicator drawer opened.
+      </description>
+    </key>
+    <key name="always" type="as">
+      <default>[]</default>
+      <summary>Always visible</summary>
+      <description>
+        Always visible 3rd party extension indicators.
       </description>
     </key>
   </schema>
