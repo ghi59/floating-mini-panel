@@ -10,7 +10,11 @@ Floating Mini Panel replaces the Gnome Main Panel with a movable and always-on-t
 
 ## Features
 
-- Auto Mode <mark>(new)</mark>
+- System-, Extension- and App-Indicator (<u>no legacy appicons</u>) support <mark>(new)</mark>
+  
+- Indicator Drawer and Always-Visible-Area <mark>(new)</mark>
+  
+- Auto Mode
   
 - Respects Dark / Light mode.
   
@@ -57,8 +61,22 @@ There are two modes of operation, which you can activate in the QuickToggle menu
   | PaperWM | Switch workspaces | Hide Top Panel per workspace |
   | Hide Top Bar | - Dodge window to Main Panel<br/>- Maximze window<br/>- Fullscreen (F11)<br/>- Reveal/Hide Main Panel | Intelli-Hide |
   | Dash To Panel | - Dodge window to Main Panel<br/>- Maximze window<br/>- Fullscreen (F11)<br/>- Reveal/Hide Main Panel | Intelli-Hide |
+  
 
-**Tip**: To disable the revealing of Main Panel by mouse, disable `Show panel when mouse approaches edge of screen` for 'Hide Top Bar' and/or set  `Required pressure threshold (px)`to `9990` for 'Dash To Panel'.
+**Tip**: To disable the revealing of Main Panel by mouse, disable `Show panel when mouse approaches edge of screen` for 'Hide Top Bar' and/or set `Required pressure threshold (px)`to `9990` for 'Dash To Panel'.
+
+Since version 4 there is support for System-, Extension- and App-Indicators w/o Legacy AppIcons. The indicators are placed in a **Drawer** and a **Always-Visible-Area**. App-Indicators are always placed in the Always-Visible-Area and cannot be moved in the Drawer, because of a technical reason, but also because it makes no sense to hide them (if you don't like that, disable App-Indicators support in GNOME Extension Manager or if possible in the app itself).
+
+- To open and close the Drawer do a middle click on the Handle Button.
+  
+- To move an indicator from the Drawer to the Always-Visible-Area and vice versa do a middle click on the indicator itself.
+  
+  The order of the indicators follows their order in the Main Panel. As soon as there are indicators in the Drawer and in the Always-Visible-Area and the Drawer is opened, a small divider between the two areas will be visible. Closing the Drawer, or moving all indicators out of the Drawer (which would make no sense, because someone could just leave the Drawer open with the same result) or out of the Always-Visible-Area, will hide the divider. All your customizations will be written to the extension settings and restored across sessions.
+  
+
+**Be aware that most but not all Extension Indicators are supported well , especially very complex indicators e.g. 'Media Controls' might have problems or missing functionality! I am working on it.**
+
+But if you are using a "normal" extension with an indicator and experience problems, let me know by opening an issue.
 
 ---
 
@@ -68,29 +86,33 @@ This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Nei
 
 1. What is changed in all modes:
   
-   - The `Mini Panel` is added (TopChrome) to the system.
+  - The `Mini Panel` is added (TopChrome) to the system.
     
-   - Unredirection is disabled.
+  - Unredirection is disabled.
     
-   - Custom Hotkey Handlers for DateMenu and Quicksettings menus.
+  - Custom Hotkey Handlers for DateMenu and Quicksettings menus.
     
-   - SourceActor for DateMenu and Quicksettings menus.
+  - SourceActor for DateMenu and Quicksettings menus.
     
-   - ArrowAlignment for DateMenu and Quicksettings menus.
+  - ArrowAlignment for DateMenu and Quicksettings menus.
     
-   - Bottom padding for menus (globally via CSS).
-
+  - Bottom padding for menus (globally via CSS).
     
 2. What is changed additionally in permanent mode:
   
-   - PanelBox is moved out of the visible screen area and vice versa.
+  - PanelBox is moved out of the visible screen area and vice versa.
     
-   - Panel is hidden respectively shown.
-
+  - Panel is hidden respectively shown.
     
 3. What is changed additionally in automatic mode:
   
-   - Nothing.
+  - Nothing.
+4. What is changed additionally for System-, Extension- and App-Indicators:
+  
+  - SourceActor for menus.
+    
+  - ArrowAlignment menus.
+    
 
 ---
 
@@ -99,18 +121,59 @@ This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Nei
 | Feature | Status |
 | --- | --- |
 | Stand-alone Automatic Mode (w/o 3rd party extensions) | planned |
-| Present 3rd party indicators (Bartender Style MacOS) | Coding finished, Testing ongoing, available in Version 4 |
-| Favorites menu via middle click on handle button | Not neccessary anymore, if 3rd party indicators are available in `Mini Panel`  |
-| QuickSettings scroll actions (Volume, Caffeine, etc) | Coding finished, Testing ongoing, available in Version 4 |
+| Issue #1: Present 3rd party indicators (Bartender Style MacOS) | <mark>Available since Version 4</mark> |
+| Favorites menu via middle click on handle button | Not neccessary anymore, if 3rd party indicators are available in `Mini Panel` |
+| QuickSettings scroll actions (Volume, Caffeine, Workspace) | <mark>Available since Version 4</mark> |
+| Issue #4: Touchscreen support | planned |
+| Issue #5: Default Location and Predefined Locations (Top-Left,  Top-Center, Top-Right, Bottom-Left, Bottom-Center, Bottom-Right) | planned |
+| Vertical Orientation | open |
 | Theming (Icon- & Font-Size, Spacing, etc.) | open |
 
 ---
 
 ### Known Problems
 
-| Problem | Solution |
+| Problem | Solution / Workaround |
 | --- | --- |
 | When enabling/disabling extensions and/or changing settings and in rare cases e.g. after System Suspend this extension could get out-of-sync in automatic mode | Simply open Overview and close it again to resync |
+| When enabling ArcMenu during runtime it's Menu is not aligned correctly to the Indicator in the `Mini Panel`. | Simply open Overview and close it again to align the menu correctly |
+| AppIndicator icon of Zoom doesn't show up in `Mini Panel` | Start Zoom with Main Panel shown |
+
+---
+
+## Version History
+
+**Version 4**
+
+- **Bug**: Turning of `Mini Panel` in Auto Mode via QuickSettings and turning back on, switched it into Permanent Mode w/o updating subtitle of toggle in QuickSettings corrected.
+  
+- Scroll Actions for Volume In, Volume Out and Caffeine on QuickSettings indicators and for Workspace switching on Handle Button added.
+  
+- **Issue #1**: Support for System-, Extension- and App-Indicators w/o Legacy AppIcons in Drawer (Bartender style) and Always-Visible-Area added.
+  
+- QuickToggle code refactored.
+  
+- **Issue #3**: Check for existance of QuickSettings._system before connecting to signal.
+  
+
+**Version 3**
+
+- Auto Mode added
+  
+- **Issue #2**: Hotkey support for DateMenu and QuickSettings added.
+  
+- Missing functionality in relocation code added.
+  
+- Showing of `Mini Panel` with animation added.
+  
+
+**Verion 2**
+
+- **Rejected**: Missing GLib.Timeout cleanup code added.
+
+**Version 1**
+
+- Initial code with permanent hiding of Main Panel, left click on Handle Button for Overview and right click for hiding (5 sec.) of `Mini Panel`.
 
 ---
 
