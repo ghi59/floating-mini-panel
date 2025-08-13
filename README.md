@@ -85,34 +85,26 @@ But if you are using a "normal" extension with an indicator and experience probl
 This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Neither <u>deprecated functions</u> nor <u>code injections</u> are used. Further it is not very intrusive into the GNOME Shell code respective into the running system.
 
 1. What is changed in all modes:
-  
-  - The `Mini Panel` is added (TopChrome) to the system.
-    
-  - Unredirection is disabled.
-    
-  - Custom Hotkey Handlers for DateMenu and Quicksettings menus.
-    
-  - SourceActor for DateMenu and Quicksettings menus.
-    
-  - ArrowAlignment for DateMenu and Quicksettings menus.
-    
-  - Bottom padding for menus (globally via CSS).
-    
+   - The `Mini Panel` is added (TopChrome) to the system.
+   - Unredirection is disabled.
+   - Custom Hotkey Handlers for DateMenu and Quicksettings menus.
+   - SourceActor for DateMenu and Quicksettings menus.
+   - ArrowAlignment for DateMenu and Quicksettings menus.
+   - Bottom padding for menus (globally via CSS).
+
+
 2. What is changed additionally in permanent mode:
-  
-  - PanelBox is moved out of the visible screen area and vice versa.
-    
-  - Panel is hidden respectively shown.
-    
+   - PanelBox is moved out of the visible screen area and vice versa.
+   - Panel is hidden respectively shown.
+
+ 
 3. What is changed additionally in automatic mode:
-  
-  - Nothing.
-4. What is changed additionally for System-, Extension- and App-Indicators:
-  
-  - SourceActor for menus.
-    
-  - ArrowAlignment menus.
-    
+   - Nothing.
+
+
+4. What is changed additionally for System-, Extension- and App-Indicators:  
+   - SourceActor for menus.
+   - ArrowAlignment menus.
 
 ---
 
