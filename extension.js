@@ -32,6 +32,8 @@ import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as QuickSettings from 'resource:///org/gnome/shell/ui/quickSettings.js';
 
+import * as IndicatorsDrawer from './indicatorsDrawer.js';
+
 const LAYOUTMANAGER = Main.layoutManager;
 const PANEL = Main.panel;
 const PANELBOX = LAYOUTMANAGER.panelBox;
@@ -84,7 +86,22 @@ const FloatingMiniPanel = GObject.registerClass(
                     x_align: Clutter.ActorAlign.CENTER,
                 })
             );
+
+            // START CODE WORKSPACE SCROLL
+            this._ctlBtn.connect('scroll-event', (obj, event) => {
+                Main.wm.handleWorkspaceScroll(event);
+            });
+            // END CODE WORKSPACE SCROLL
+
             this.add_child(this._ctlBtn);
+
+            // START CODE 3RD PARTY EXTENSIONS
+            this._indsDrawer = new IndicatorsDrawer.IndicatorsDrawer(
+                this,
+                this._sets
+            );
+            this.add_child(this._indsDrawer);
+            // END CODE 3RD PARTY EXTENSIONS
 
             // Date Button -----------------------------------------------------
             this._dateBtn = new St.BoxLayout({
@@ -158,7 +175,6 @@ const FloatingMiniPanel = GObject.registerClass(
                 }
             );
             this.add_child(this._quickBtn);
-
             this._cloneIndicators();
 
             // Clutter.Clone is very convinient, but I did not find a way to
@@ -189,46 +205,57 @@ const FloatingMiniPanel = GObject.registerClass(
                 null
             );
             this._fmpQuickToggle.menu.addMenuItem(this._autoItem);
-            this._autoItem.connect('activate', () => {
-                QUICKSETTINGS.menu.close();
-                this._permItem.setOrnament(PopupMenu.Ornament.NONE);
-                this._autoItem.setOrnament(PopupMenu.Ornament.CHECK);
-                this._fmpQuickToggle.subtitle = this._autoItem.label.text;
-                this._fmpQuickToggle.checked = true;
-                if (this.visible) this._hideFloatingMiniPanel();
-
-                this._state = State.AUTO;
-                this._sets.set_int('state', this._state);
-
-                let priMon = DISPLAY.get_primary_monitor();
-                let priMonGeo = DISPLAY.get_monitor_geometry(priMon);
-                if (
-                    PANELBOX.y < priMonGeo.y ||
-                    Math.abs(PANELBOX.translation_y) === PANELBOX.height ||
-                    Math.abs(PANELBOX.translation_x) === PANELBOX.width
-                ) {
-                    this._showFloatingMiniPanel();
-                }
-                if (this.visible || PANELBOX.visible) QUICKSETTINGS.menu.open();
-            });
 
             this._permItem = new PopupMenu.PopupImageMenuItem(
                 'Permanent',
                 null
             );
             this._fmpQuickToggle.menu.addMenuItem(this._permItem);
-            this._permItem.connect('activate', () => {
-                QUICKSETTINGS.menu.close();
-                this._permItem.setOrnament(PopupMenu.Ornament.CHECK);
-                this._autoItem.setOrnament(PopupMenu.Ornament.NONE);
-                this._fmpQuickToggle.subtitle = this._permItem.label.text;
-                this._fmpQuickToggle.checked = true;
 
-                this._state = State.ON;
-                this._sets.set_int('state', this._state);
+            // Helper function for PanelBox Visibility
+            function panelBoxHidden() {
+                let priMon = DISPLAY.get_primary_monitor();
+                let priMonGeo = DISPLAY.get_monitor_geometry(priMon);
+                if (
+                    PANELBOX.y < priMonGeo.y ||
+                    Math.abs(PANELBOX.translation_y) === PANELBOX.height ||
+                    Math.abs(PANELBOX.translation_x) === PANELBOX.width
+                )
+                    return true;
+                return false;
+            }
 
-                if (!OVERVIEW.visible) this._showFloatingMiniPanel();
-                if (this.visible || PANELBOX.visible) QUICKSETTINGS.menu.open();
+            // Menu item clicked
+            this._fmpQuickToggle.menu.connect('activate', (obj, menuItem) => {
+                if (this._fmpQuickToggle.subtitle !== menuItem.label.text) {
+                    QUICKSETTINGS.menu.close();
+                    this._autoItem.setOrnament(PopupMenu.Ornament.NONE);
+                    this._permItem.setOrnament(PopupMenu.Ornament.NONE);
+                    switch (menuItem) {
+                        case this._autoItem:
+                            // Mode was Permanent, so we have to clean up
+                            if (this.visible) this._hideFloatingMiniPanel();
+                            this._state = State.AUTO;
+                            // If PanelBox is not visible, this is shown
+                            if (panelBoxHidden) {
+                                this._showFloatingMiniPanel();
+                            }
+                            break;
+                        case this._permItem:
+                            this._state = State.ON;
+                            // If Overview is not visible, this is shown
+                            if (!OVERVIEW.visible)
+                                this._showFloatingMiniPanel();
+                            break;
+                        default:
+                    }
+                    this._sets.set_int('state', this._state);
+                    menuItem.setOrnament(PopupMenu.Ornament.CHECK);
+                    this._fmpQuickToggle.subtitle = menuItem.label.text;
+                    this._fmpQuickToggle.checked = true;
+                    if (this.visible || PANELBOX.visible)
+                        QUICKSETTINGS.menu.open();
+                }
             });
 
             // Initialize menu
@@ -249,8 +276,10 @@ const FloatingMiniPanel = GObject.registerClass(
                     this._state = State.OFF;
                     this._sets.set_int('state', this._state);
                 } else {
-                    if (this._autoItem.ornament === PopupMenu.Ornament.CHECK) {
+                    if (this._autoItem._ornament === PopupMenu.Ornament.CHECK) {
                         this._state = State.AUTO;
+                        if (!PANELBOX.visible && !OVERVIEW.visible)
+                            this._showFloatingMiniPanel();
                     } else {
                         this._state = State.ON;
                         this._showFloatingMiniPanel();
@@ -284,6 +313,9 @@ const FloatingMiniPanel = GObject.registerClass(
                             }
                             break;
                         case 2:
+                            // START CODE 3RD PARTY EXTENSIONS
+                            this._indsDrawer.toggle();
+                            // END CODE 3RD PARTY EXTENSIONS
                             break;
                         case 3:
                             // Hide this for 5 sec.
@@ -446,47 +478,53 @@ const FloatingMiniPanel = GObject.registerClass(
                 if (this._state === State.ON) {
                     this._hideFloatingMiniPanel();
                 }
-                return GLib.SOURCE_REMOVE;
+                return Clutter.Event_STOP;
             });
+
             this._ovConId2 = OVERVIEW.connect('hiding', () => {
                 if (this._state === State.ON) {
                     this._showFloatingMiniPanel();
                 }
-                return GLib.SOURCE_REMOVE;
+                return Clutter.Event_STOP;
             });
 
-            // Close QuickSettings menu when PowerToggle is clicked.
-            this._ptConId1 =
-                QUICKSETTINGS._system._systemItem._powerToggle.connect(
-                    'clicked',
-                    () => {
-                        QUICKSETTINGS.menu.close();
-                    }
-                );
-
-            // Close QuickSettings menu when SettingsItem is clicked.
-            let childs =
-                QUICKSETTINGS._system._systemItem.firstChild.get_children();
-            for (let child of childs) {
-                if (child._settingsApp) {
-                    this._settingsItem = child;
-                    this._siConId2 = this._settingsItem.connect(
+            // START CODE ISSUE #3: TypeError: QUICKSETTINGS._system is undefined
+            if (QUICKSETTINGS._system) {
+                // Close QuickSettings menu when PowerToggle is clicked.
+                this._ptConId1 =
+                    QUICKSETTINGS._system._systemItem._powerToggle.connect(
                         'clicked',
                         () => {
                             QUICKSETTINGS.menu.close();
                         }
                     );
-                    break;
-                }
-            }
 
-            // Close QuickSettings menu when Shutdown-Suspend is clicked.
-            this._simConId3 = QUICKSETTINGS._system._systemItem.menu.connect(
-                'activate',
-                () => {
-                    QUICKSETTINGS.menu.close();
+                // Close QuickSettings menu when SettingsItem is clicked.
+                let childs =
+                    QUICKSETTINGS._system._systemItem.firstChild.get_children();
+                for (let child of childs) {
+                    if (child._settingsApp) {
+                        this._settingsItem = child;
+                        this._siConId2 = this._settingsItem.connect(
+                            'clicked',
+                            () => {
+                                QUICKSETTINGS.menu.close();
+                            }
+                        );
+                        break;
+                    }
                 }
-            );
+
+                // Close QuickSettings menu when Shutdown-Suspend is clicked.
+                this._simConId3 =
+                    QUICKSETTINGS._system._systemItem.menu.connect(
+                        'activate',
+                        () => {
+                            QUICKSETTINGS.menu.close();
+                        }
+                    );
+            }
+            // END CODE ISSUE #3: TypeError: QUICKSETTINGS._system is undefined
 
             // START CODE MENU HOTKEYS
             Main.wm.setCustomKeybindingHandler(
@@ -545,18 +583,25 @@ const FloatingMiniPanel = GObject.registerClass(
         // END CODE MENU HOTKEYS
 
         _showFloatingMiniPanel() {
+            // If in Permanent Mode hide the Main Panel
             if (this._state !== State.AUTO) {
-                PANEL.visible = false;
+                //PANEL.visible = false;
                 let priMon = DISPLAY.get_primary_monitor();
                 let priMonGeo = DISPLAY.get_monitor_geometry(priMon);
                 PANELBOX.set_position(priMonGeo.y, -PANELBOX.height);
             }
 
+            // Just make sure no problems will occur!
+            DATEMENU.menu.close();
+            QUICKSETTINGS.menu.close();
+
+            // Change Menus Props
             DATEMENU.menu.sourceActor = this._dateBtn;
             DATEMENU.menu._arrowAlignment = 0.5;
             QUICKSETTINGS.menu.sourceActor = this._quickBtn;
             QUICKSETTINGS.menu._arrowAlignment = 0.5;
 
+            // Show this with animation
             this.remove_all_transitions();
             this.opacity = 0;
             this.visible = true;
@@ -569,7 +614,7 @@ const FloatingMiniPanel = GObject.registerClass(
         }
 
         _hideFloatingMiniPanel() {
-            /*
+            /*           
             this.remove_all_transitions();
             this.opacity = 255;
             this.ease({
@@ -580,18 +625,27 @@ const FloatingMiniPanel = GObject.registerClass(
                     this.visible = false;
                 }
             });
-*/
+            */
+
+            // Hide this w/o animation
             this.visible = false;
+
+            // Just make sure no problems will occur!
+            DATEMENU.menu.close();
+            QUICKSETTINGS.menu.close();
+
+            // Reset Menus Props
             DATEMENU.menu.sourceActor = DATESOURCEACTOR;
             DATEMENU.menu._arrowAlignment = DATEARROWALIGNMENT;
             QUICKSETTINGS.menu.sourceActor = QUICKSOURCEACTOR;
             QUICKSETTINGS.menu._arrowAlignment = QUICKARROWALIGNMENT;
 
+            // If in Permanent Mode show the Main Panel
             if (this._state !== State.AUTO) {
                 let priMon = DISPLAY.get_primary_monitor();
                 let priMonGeo = DISPLAY.get_monitor_geometry(priMon);
                 PANELBOX.set_position(priMonGeo.y, priMonGeo.y);
-                PANEL.visible = true;
+                //PANEL.visible = true;
             }
         }
 
@@ -656,7 +710,6 @@ const FloatingMiniPanel = GObject.registerClass(
             this._sets.set_int('pos-y', rect.y);
         }
 
-        // Scroll Actions for 'Caffeine' and 'Volume' are not implemented!
         _create_clone(orgInd, type, i) {
             this._orgInds[i] = orgInd;
             if (type === 'gicon') {
@@ -671,6 +724,45 @@ const FloatingMiniPanel = GObject.registerClass(
                     visible: true,
                 });
             }
+
+            // START CODE VOLUME AND CAFFEINE SCROLLING
+            // Scrolling on output volume
+            if (orgInd.get_parent()) {
+                if (orgInd.get_parent()._output) {
+                    this._cloneInds[i].reactive = true;
+                    this._cloneInds[i].connect('scroll-event', (actor, event) =>
+                        this._orgInds[i]
+                            .get_parent()
+                            ._handleScrollEvent(
+                                this._orgInds[i].get_parent()._output,
+                                event
+                            )
+                    );
+                }
+
+                // Scrolling on input volume
+                if (orgInd.get_parent()._input) {
+                    this._cloneInds[i].reactive = true;
+                    this._cloneInds[i].connect('scroll-event', (actor, event) =>
+                        this._orgInds[i]
+                            .get_parent()
+                            ._handleScrollEvent(
+                                this._orgInds[i].get_parent()._input,
+                                event
+                            )
+                    );
+                }
+
+                // Scrolling on Caffeine
+                if (orgInd.get_parent()._name === 'Caffeine') {
+                    this._cloneInds[i].reactive = true;
+                    this._cloneInds[i].connect('scroll-event', (actor, event) =>
+                        this._orgInds[i].get_parent()._handleScrollEvent(event)
+                    );
+                }
+            }
+            // END CODE VOLUME AND CAFFEINE SCROLLING
+
             this._quickBtn.add_child(this._cloneInds[i]);
             this._orgInds[i].bind_property(
                 type,
@@ -706,6 +798,11 @@ const FloatingMiniPanel = GObject.registerClass(
                         i++;
                         this._create_clone(ind._timerLabel, 'text', i);
                     }
+                    if (ind._label) {
+                        // Ubuntu Net Speed
+                        i++;
+                        this._create_clone(ind._label, 'text', i);
+                    }
                 } else {
                     if (ind._vpnIndicator) {
                         this._create_clone(ind._vpnIndicator, 'gicon', i);
@@ -720,6 +817,8 @@ const FloatingMiniPanel = GObject.registerClass(
 
         destroy() {
             this._hideFloatingMiniPanel();
+
+            this._indsDrawer.destroy();
 
             this._cloneInds = null;
             this._orgInds = null;
@@ -771,16 +870,22 @@ const FloatingMiniPanel = GObject.registerClass(
             OVERVIEW.disconnect(this._ovConId2);
             this._ovConId2 = null;
 
-            QUICKSETTINGS._system._systemItem._powerToggle.disconnect(
-                this._ptConId1
-            );
-            this._ptConId1 = null;
+            // START CODE ISSUE #3: TypeError: QUICKSETTINGS._system is undefined
+            if (QUICKSETTINGS._system) {
+                QUICKSETTINGS._system._systemItem._powerToggle.disconnect(
+                    this._ptConId1
+                );
+                this._ptConId1 = null;
 
-            this._settingsItem.disconnect(this._siConId2);
-            this._siConId2 = null;
+                this._settingsItem.disconnect(this._siConId2);
+                this._siConId2 = null;
 
-            QUICKSETTINGS._system._systemItem.menu.disconnect(this._simConId3);
-            this._simConId3 = null;
+                QUICKSETTINGS._system._systemItem.menu.disconnect(
+                    this._simConId3
+                );
+                this._simConId3 = null;
+            }
+            // END CODE ISSUE #3: TypeError: QUICKSETTINGS._system is undefined
 
             QUICKSETTINGS._indicators.disconnectObject(this._qiConId);
             this._qiConId = null;
