@@ -7,13 +7,31 @@
 #FloatingMiniPanel .system-status-icon {
   width: 24px;
   padding: 7px 0px;
+  -st-icon-style: symbolic !important;
+}
+
+#FloatingMiniPanel .system-status-icon-2 {
+  width: 24px;
+  padding-top: 7px;
+  padding-bottom: 7px;
+  padding-left: 6px;
+  -st-icon-style: symbolic !important;
+}
+
+#FloatingMiniPanel .clone {
+  padding: 7px 8px;
+}
+
+#FloatingMiniPanel .divider {
+  margin: 6px 2px;
+  border: 1px solid grey;
 }
 
 #ctlBtn {
   padding: 0px 2px;
 }
 
-#dateBtn, #quickBtn {
+#dateBtn, #quickBtn, #extBtn {
   padding: 0px 8px;
 }
 
@@ -25,4 +43,3 @@
 .popup-menu.panel-menu {
   margin-bottom: 0;
 }
-
