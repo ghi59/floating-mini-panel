@@ -128,7 +128,7 @@ This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Nei
 
 | Problem | Solution / Workaround |
 | --- | --- |
-| When enabling/disabling extensions and/or changing settings and in rare cases e.g. after System Suspend this extension could get out-of-sync in automatic mode | Simply open Overview and close it again to resync |
+| When enabling/disabling extensions and/or changing settings and in rare cases e.g. after System Suspend this extension could get out-of-sync in automatic and permanent mode | Simply open Overview and close it again to resync |
 | When enabling ArcMenu during runtime it's Menu is not aligned correctly to the Indicator in the `Mini Panel`. | Simply open Overview and close it again to align the menu correctly |
 | AppIndicator icon of Zoom doesn't show up in `Mini Panel` | Start Zoom with Main Panel shown |
 
