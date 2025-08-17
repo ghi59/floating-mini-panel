@@ -120,7 +120,7 @@ This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Nei
 | Issue #5: Default Location and Predefined Locations (Top-Left,  Top-Center, Top-Right, Bottom-Left, Bottom-Center, Bottom-Right) | planned |
 | Vertical Orientation | open |
 | Theming (Icon- & Font-Size, Spacing, etc.) | open |
-| Stabilize behavior in 'permanent mode' on Startup, Lock Screen and Suspend | coding ongoing |
+| Stabilize behavior in 'permanent mode' on Startup, Lock Screen and Suspend | coding done, testing ongoing, available in version 5 |
 
 ---
 
