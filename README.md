@@ -136,13 +136,18 @@ This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Nei
 
 ## Version History
 
-**Version 5 (6 on extensions.gnome.org because of one rejection)**
+**Version 6**
 
 - Improved and enhanced Showing / Hiding behavior on Startup, Lock Screen, Suspend and Enable / Disable.
   
 - Panel-hiding extensions are tracked and when enabled, `Mini Panel` switches into Auto Mode and Permanent Mode is not allowed (and vice versa).
 
 - Bug fixing.
+
+
+**Version 5**
+
+- **Rejected**: Missing GObject.disconnect code added in destroy().
 
 
 **Version 4**
