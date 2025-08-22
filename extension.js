@@ -28,11 +28,18 @@ import Shell from 'gi://Shell';
 import St from 'gi://St';
 
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
+import * as LoginManager from 'resource:///org/gnome/shell/misc/loginManager.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 import * as QuickSettings from 'resource:///org/gnome/shell/ui/quickSettings.js';
 
 import * as IndicatorsDrawer from './indicatorsDrawer.js';
+
+// START CODE ENHANCING PERMANENT MODE
+// Persistent variable until restart of GNOME Shell
+// Needed when this is enabled during runtime.
+let startupComplete = null;
+// END CODE ENHANCING PERMANENT MODE
 
 const LAYOUTMANAGER = Main.layoutManager;
 const PANEL = Main.panel;
@@ -45,6 +52,11 @@ const DATEARROWALIGNMENT = DATEMENU.menu._arrowAlignment;
 const QUICKSETTINGS = PANEL.statusArea['quickSettings'];
 const QUICKSOURCEACTOR = QUICKSETTINGS.menu.sourceActor;
 const QUICKARROWALIGNMENT = QUICKSETTINGS.menu._arrowAlignment;
+
+// START CODE PANEL-HIDING EXTENSIONS
+const DTP_UUID = 'dash-to-panel@jderose9.github.com';
+const HTB_UUID = 'hidetopbar@mathieu.bidon.ca';
+// END CODE PANEL-HIDING EXTENSIONS
 
 const State = {
     OFF: 0,
@@ -70,6 +82,8 @@ const FloatingMiniPanel = GObject.registerClass(
                 this._sets.get_int('pos-x'),
                 this._sets.get_int('pos-y')
             );
+
+            this._panelHidingExts = [];
 
             // Control Button --------------------------------------------------
             this._ctlBtn = new St.BoxLayout({
@@ -235,14 +249,25 @@ const FloatingMiniPanel = GObject.registerClass(
                         case this._autoItem:
                             // Mode was Permanent, so we have to clean up
                             if (this.visible) this._hideFloatingMiniPanel();
+
+                            // START CODE ENHANCING PERMANENT MODE
+                            this._preparePermanentMode(false);
+                            // END CODE ENHANCING PERMANENT MODE
+
                             this._state = State.AUTO;
                             // If PanelBox is not visible, this is shown
-                            if (panelBoxHidden) {
+                            // Bug in v4: forgot '()'!
+                            if (panelBoxHidden()) {
                                 this._showFloatingMiniPanel();
                             }
                             break;
                         case this._permItem:
                             this._state = State.ON;
+
+                            // START CODE ENHANCING PERMANENT MODE
+                            this._preparePermanentMode(true);
+                            // END CODE ENHANCING PERMANENT MODE
+
                             // If Overview is not visible, this is shown
                             if (!OVERVIEW.visible)
                                 this._showFloatingMiniPanel();
@@ -273,15 +298,30 @@ const FloatingMiniPanel = GObject.registerClass(
                 QUICKSETTINGS.menu.close();
                 if (this._state !== State.OFF) {
                     this._hideFloatingMiniPanel();
+
+                    // START CODE ENHANCING PERMANENT MODE
+                    this._preparePermanentMode(false);
+                    // END CODE ENHANCING PERMANENT MODE
+
                     this._state = State.OFF;
                     this._sets.set_int('state', this._state);
                 } else {
                     if (this._autoItem._ornament === PopupMenu.Ornament.CHECK) {
                         this._state = State.AUTO;
+
+                        // START CODE ENHANCING PERMANENT MODE
+                        this._preparePermanentMode(false);
+                        // END CODE ENHANCING PERMANENT MODE
+
                         if (!PANELBOX.visible && !OVERVIEW.visible)
                             this._showFloatingMiniPanel();
                     } else {
                         this._state = State.ON;
+
+                        // START CODE ENHANCING PERMANENT MODE
+                        this._preparePermanentMode(true);
+                        // END CODE ENHANCING PERMANENT MODE
+
                         this._showFloatingMiniPanel();
                     }
                     this._sets.set_int('state', this._state);
@@ -329,9 +369,9 @@ const FloatingMiniPanel = GObject.registerClass(
                                 5000,
                                 () => {
                                     if (
-                                        (!PANELBOX.visible &&
-                                            !OVERVIEW.visible) ||
-                                        this._state === State.ON
+                                        // Bug fix v5
+                                        panelBoxHidden() &&
+                                        !OVERVIEW.visible
                                     )
                                         this.show();
                                     this._timeoutId1 = null;
@@ -421,7 +461,7 @@ const FloatingMiniPanel = GObject.registerClass(
                             GLib.PRIORITY_DEFAULT,
                             50,
                             () => {
-                                // Test 'HideTopPanel' / 'DashToPanel' show Panelbox
+                                // Test 'HideTopPanel' / 'DashToPanel' show PanelBox
                                 let priMon = DISPLAY.get_primary_monitor();
                                 let priMonGeo =
                                     DISPLAY.get_monitor_geometry(priMon);
@@ -544,15 +584,201 @@ const FloatingMiniPanel = GObject.registerClass(
             );
             // END CODE MENU HOTKEYS
 
+            // START CODE PANEL-HIDING EXTENSIONS
+            // Set this to Auto Mode and disable Permanent Mode if the
+            // panel-hiding extension 'Dash-To-Panel' or 'Hide-Top-Bar'
+            // is enabled to make sure no problems occur!
+
+            // Check during runtime
+            this._meConId = Main.extensionManager.connect(
+                'extension-state-changed',
+                (obj, ext) => {
+                    if (
+                        startupComplete &&
+                        (ext.metadata.uuid === DTP_UUID ||
+                            ext.metadata.uuid === HTB_UUID)
+                    ) {
+                        if (ext.enabled) {
+                            if (
+                                this._panelHidingExts.indexOf(
+                                    ext.metadata.uuid
+                                ) < 0
+                            ) {
+                                this._disablePermanentMode(ext.metadata.uuid);
+                            }
+                        } else {
+                            if (
+                                this._panelHidingExts.indexOf(
+                                    ext.metadata.uuid
+                                ) >= 0
+                            ) {
+                                this._panelHidingExts.splice(
+                                    this._panelHidingExts.indexOf(
+                                        ext.metadata.uuid
+                                    ),
+                                    1
+                                );
+                                if (this._panelHidingExts.length === 0) {
+                                    if (this.visible)
+                                        this._hideFloatingMiniPanel();
+                                    this._permItem.reactive = true;
+                                    Main.notify(
+                                        'Floating Mini Panel allowing Permanent Mode again,',
+                                        'because no panel-hiding extension is active!'
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
+            );
+            // END CODE PANEL-HIDING EXTENSIONS
+
             // Complete startup
             LAYOUTMANAGER.addTopChrome(this, {trackFullscreen: false});
             global.compositor.disable_unredirect();
-            if (this._state === State.ON) {
-                this._showFloatingMiniPanel();
+
+            // START CODE STARTUP, ALSO HANDLES LOCK SCREEN
+            // If this is in 'permanent mode' and enabled during runtime
+            // or screen is unlocked.
+            if (startupComplete && this._state === State.ON) {
+                this._checkPanelHidingExts();
+                if (this._permItem.reactive) {
+                    // START CODE ENHANCING PERMANENT MODE
+                    this._preparePermanentMode(true);
+                    // END CODE ENHANCING PERMANENT MODE
+
+                    this._showFloatingMiniPanel();
+                }
             }
+            // If this is in 'auto mode' and enabled during runtime
+            // or screen is unlocked.
+            if (startupComplete && this._state === State.AUTO) {
+                this._checkPanelHidingExts();
+                if (panelBoxHidden()) this._showFloatingMiniPanel();
+            }
+
+            // If this is in 'permanent mode' and already enabled,
+            // wait for GNOME Shell to finish startup
+            let tmpConId = LAYOUTMANAGER.connect('startup-complete', () => {
+                // START CODE PANEL-HIDING EXTENSIONS
+                // Set this to Auto Mode and disable Permanent Mode if the
+                // panel-hiding extension 'Dash-To-Panel' or 'Hide-Top-Bar'
+                // is enabled to make sure no problems occur!
+
+                // Check at startup
+                this._checkPanelHidingExts();
+                // END CODE PANEL-HIDING EXTENSIONS
+
+                if (this._state === State.ON) {
+                    // START CODE ENHANCING PERMANENT MODE
+                    this._preparePermanentMode(true);
+                    // END CODE ENHANCING PERMANENT MODE
+
+                    if (!OVERVIEW.visible) this._showFloatingMiniPanel();
+                }
+                startupComplete = true;
+
+                // Remove connection, we don't need it anymore
+                // in the running session.
+                LAYOUTMANAGER.disconnect(tmpConId);
+                tmpConId = null;
+            });
+            // END CODE STARTUP
+
+            // START CODE SUSPEND
+            this._loginManager = LoginManager.getLoginManager();
+            this._lpConId = this._loginManager.connect(
+                'prepare-for-sleep',
+                (obj, state) => {
+                    if (this._state === State.ON && state) {
+                        this._hideFloatingMiniPanel();
+                    }
+                    if (this._state === State.ON && !state) {
+                        this._showFloatingMiniPanel();
+                    }
+                }
+            );
+            // END CODE SUSPEND
         }
 
         // FloatingMiniPanel Procedures ----------------------------------------
+
+        // START CODE ENHANCING PERMANENT MODE
+        // Prepare the system for permanent mode and vice versa
+        // It would work without, but then we would have a lot of
+        // allocation errors!
+        // It has to be done before Overview is toggled, to take effect.
+        // Therefore it can't be done in the show / hide functions.
+        _preparePermanentMode(on) {
+            if (on) {
+                LAYOUTMANAGER.untrackChrome(PANELBOX);
+                OVERVIEW._overview._controls._searchEntryBin.set_style(
+                    `padding-top: ${PANELBOX.height}px;`
+                );
+            } else {
+                if (LAYOUTMANAGER._findActor(PANELBOX) === -1) {
+                    LAYOUTMANAGER.trackChrome(PANELBOX, {
+                        affectsStruts: true,
+                        trackFullscreen: true,
+                    });
+                    OVERVIEW._overview._controls._searchEntryBin.set_style(
+                        null
+                    );
+                }
+            }
+        }
+        // END CODE ENHANCING PERMANENT MODE
+
+        // START CODE PANEL-HIDING EXTENSIONS
+        _checkPanelHidingExts() {
+            if (Main.extensionManager._extensionOrder.indexOf(DTP_UUID) >= 0) {
+                let disabled = global.settings.get_strv('disabled-extensions');
+                if (disabled.indexOf(DTP_UUID) < 0) {
+                    this._disablePermanentMode(DTP_UUID);
+                }
+            }
+            if (Main.extensionManager._extensionOrder.indexOf(HTB_UUID) >= 0) {
+                let disabled = global.settings.get_strv('disabled-extensions');
+                if (disabled.indexOf(HTB_UUID) < 0) {
+                    this._disablePermanentMode(HTB_UUID);
+                }
+            }
+        }
+
+        _disablePermanentMode(phext) {
+            if (this._panelHidingExts.indexOf(phext) < 0) {
+                this._panelHidingExts.push(phext);
+                if (this._permItem.reactive) {
+                    if (this._state === State.ON) {
+                        this._hideFloatingMiniPanel();
+
+                        // START CODE ENHANCING PERMANENT MODE
+                        this._preparePermanentMode(false);
+                        // END CODE ENHANCING PERMANENT MODE
+
+                        this._state = State.AUTO;
+                        this._sets.set_int('state', this._state);
+                        this._fmpQuickToggle.subtitle =
+                            this._autoItem.label.text;
+                        this._autoItem.setOrnament(PopupMenu.Ornament.CHECK);
+                        this._permItem.setOrnament(PopupMenu.Ornament.NONE);
+                        this._permItem.reactive = false;
+                        Main.notify(
+                            'Floating Mini Panel switched into Auto Mode,',
+                            'because ' + phext + ' is active!'
+                        );
+                    } else {
+                        this._permItem.reactive = false;
+                        Main.notify(
+                            'Floating Mini Panel disabed Permanent Mode,',
+                            'because ' + phext + ' is active!'
+                        );
+                    }
+                }
+            }
+        }
+        // END CODE PANEL-HIDING EXTENSIONS
 
         // START CODE MENU HOTKEYS
         _toggleCalendar() {
@@ -585,10 +811,12 @@ const FloatingMiniPanel = GObject.registerClass(
         _showFloatingMiniPanel() {
             // If in Permanent Mode hide the Main Panel
             if (this._state !== State.AUTO) {
-                //PANEL.visible = false;
                 let priMon = DISPLAY.get_primary_monitor();
                 let priMonGeo = DISPLAY.get_monitor_geometry(priMon);
-                PANELBOX.set_position(priMonGeo.y, -PANELBOX.height);
+                PANELBOX.set_position(
+                    priMonGeo.x,
+                    priMonGeo.y - PANELBOX.height
+                );
             }
 
             // Just make sure no problems will occur!
@@ -644,8 +872,7 @@ const FloatingMiniPanel = GObject.registerClass(
             if (this._state !== State.AUTO) {
                 let priMon = DISPLAY.get_primary_monitor();
                 let priMonGeo = DISPLAY.get_monitor_geometry(priMon);
-                PANELBOX.set_position(priMonGeo.y, priMonGeo.y);
-                //PANEL.visible = true;
+                PANELBOX.set_position(priMonGeo.x, priMonGeo.y);
             }
         }
 
@@ -858,6 +1085,16 @@ const FloatingMiniPanel = GObject.registerClass(
             this._pvConId = null;
             // END CODE AUTO MODE
 
+            // START CODE SUSPEND
+            this._loginManager.disconnect(this._lpConId);
+            this._lpConId = null;
+            // END CODE SUSPEND
+
+            // START CODE PANEL-HIDING EXTENSIONS
+            Main.extensionManager.disconnect(this._meConId);
+            this._meConId = null;
+            // END CODE PANEL-HIDING EXTENSIONS
+
             this.disconnect(this._nwConId);
             this._nwConId = null;
 
@@ -877,8 +1114,10 @@ const FloatingMiniPanel = GObject.registerClass(
                 );
                 this._ptConId1 = null;
 
-                this._settingsItem.disconnect(this._siConId2);
-                this._siConId2 = null;
+                if (this._settingsItem) {
+                    this._settingsItem.disconnect(this._siConId2);
+                    this._siConId2 = null;
+                }
 
                 QUICKSETTINGS._system._systemItem.menu.disconnect(
                     this._simConId3
@@ -904,11 +1143,22 @@ const FloatingMiniPanel = GObject.registerClass(
 
             LAYOUTMANAGER.removeChrome(this);
             global.compositor.enable_unredirect();
+
+            // START CODE ENHANCING PERMANENT MODE
+            this._preparePermanentMode(false);
+            // END CODE ENHANCING PERMANENT MODE
         }
     }
 );
 
 export default class FloatingMiniPanelExtension extends Extension {
+    // START CODE ENHANCING PERMANENT MODE
+    constructor(metadata) {
+        super(metadata);
+        startupComplete = false;
+    }
+    // END CODE ENHANCING PERMANENT MODE
+
     enable() {
         this._floatingMiniPanel = new FloatingMiniPanel(this.getSettings());
     }
