@@ -136,7 +136,7 @@ This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Nei
 
 ## Version History
 
-**Version 5**
+**Version 5 (6 on extensions.gnome.org because of one rejection)**
 
 - Improved and enhanced Showing / Hiding behavior on Startup, Lock Screen, Suspend and Enable / Disable.
   
