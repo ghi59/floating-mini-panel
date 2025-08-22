@@ -531,13 +531,10 @@ export const IndicatorsDrawer = GObject.registerClass(
                 this._cloneIndicators(Box.CENTER, child);
                 return Clutter.EVENT_STOP;
             });
-            this._prConId = RIGHTBOX.connect_after(
-                'child-added',
-                (actor, child) => {
-                    this._cloneIndicators(Box.RIGHT, child);
-                    return Clutter.EVENT_STOP;
-                }
-            );
+            this._prConId = RIGHTBOX.connect('child-added', (actor, child) => {
+                this._cloneIndicators(Box.RIGHT, child);
+                return Clutter.EVENT_STOP;
+            });
         }
 
         // Helper function to insert child into box at correct position.
@@ -559,6 +556,9 @@ export const IndicatorsDrawer = GObject.registerClass(
         // Start cloning indicators --------------------------------------------
         _cloneIndicators(box, child) {
             if (
+                // this._ind is null error of user 'from the 51st state'!
+                // I am not sure if this is realy neccessary!
+                child.firstChild &&
                 !this._cloned.includes(child.firstChild) &&
                 child.firstChild !== STATUSAREA['activities'] &&
                 child.firstChild !== STATUSAREA['dateMenu'] &&
