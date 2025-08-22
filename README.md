@@ -95,7 +95,7 @@ This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Nei
 
 2. What is changed additionally in permanent mode:
    - PanelBox is moved out of the visible screen area and vice versa.
-   - Panel is hidden respectively shown.
+   - PanelBox is untracked and vice versa.
 
  
 3. What is changed additionally in automatic mode:
@@ -120,7 +120,7 @@ This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Nei
 | Issue #5: Default Location and Predefined Locations (Top-Left,  Top-Center, Top-Right, Bottom-Left, Bottom-Center, Bottom-Right) | planned |
 | Vertical Orientation | open |
 | Theming (Icon- & Font-Size, Spacing, etc.) | open |
-| Stabilize behavior in 'permanent mode' on Startup, Lock Screen, Suspend and Enable/Disable | coding done, testing ongoing, available in version 5 |
+| Stabilize behavior in 'permanent mode' on Startup, Lock Screen, Suspend and Enable/Disable | <mark>Available since version 5</mark> |
 
 ---
 
@@ -135,6 +135,15 @@ This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Nei
 ---
 
 ## Version History
+
+**Version 5**
+
+- Improved and enhanced Showing / Hiding behavior on Startup, Lock Screen, Suspend and Enable / Disable.
+  
+- Panel-hiding extensions are tracked and when enabled, `Mini Panel` switches into Auto Mode and Permanent Mode is not allowed (and vice versa).
+
+- Bug fixing.
+
 
 **Version 4**
 
