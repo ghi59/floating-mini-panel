@@ -660,7 +660,7 @@ const FloatingMiniPanel = GObject.registerClass(
 
             // If this is in 'permanent mode' and already enabled,
             // wait for GNOME Shell to finish startup
-            let tmpConId = LAYOUTMANAGER.connect('startup-complete', () => {
+            this._lsConId = LAYOUTMANAGER.connect('startup-complete', () => {
                 // START CODE PANEL-HIDING EXTENSIONS
                 // Set this to Auto Mode and disable Permanent Mode if the
                 // panel-hiding extension 'Dash-To-Panel' or 'Hide-Top-Bar'
@@ -681,8 +681,8 @@ const FloatingMiniPanel = GObject.registerClass(
 
                 // Remove connection, we don't need it anymore
                 // in the running session.
-                LAYOUTMANAGER.disconnect(tmpConId);
-                tmpConId = null;
+                LAYOUTMANAGER.disconnect(this._lsConId);
+                this._lsConId = null;
             });
             // END CODE STARTUP
 
@@ -1084,6 +1084,13 @@ const FloatingMiniPanel = GObject.registerClass(
             PANELBOX.disconnect(this._pvConId);
             this._pvConId = null;
             // END CODE AUTO MODE
+
+            // START CODE STARTUP
+            if (this._lsConId) {
+                LAYOUTMANAGER.disconnect(this._lsConId);
+                this._lsConId = null;
+            }
+            // END CODE STARTUP
 
             // START CODE SUSPEND
             this._loginManager.disconnect(this._lpConId);
