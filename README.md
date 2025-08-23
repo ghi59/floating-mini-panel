@@ -49,11 +49,14 @@ Working most of the time with Laptops, every inch of display space is important.
 
 Simply enable Floating Mini Panel via QuickSettings menu and place it where you prefer.
 
+**Attention**:
+When installing for the first time or disable/enable accross sessions, you have to logout and login again, because this extension relies on the GNOME Shell 'startup-complete' signal to function correctly!
+
 There are two modes of operation, which you can activate in the QuickToggle menu of the `Mini Panel` in QuickSettings. Selecting a mode will automatically enable the `Mini Panel` if it was disabled.
 
-1. Permanent Mode: If permant mode is enabled, the Main Panel will be permanetly (with the exception of Overview) hidden and the `Mini Panel` shown instead.
-  
-2. Automatic Mode: In automatic mode the `Mini Panel` will only be shown, if the Main Panel is hidden. There are several ways to hide the Main Panel:
+**1. Permanent Mode**: If this mode is enabled, the Main Panel will be permanently (with the exception of Overview) hidden and the `Mini Panel` shown instead. Since version 6 Permanent Mode will be automatically switched to Auto Mode if a panel-hiding extension is enabled and also disallowed until no panel-hiding extension is active anymore (you will be informed by notification popups).
+
+**2. Automatic Mode**: In this mode the `Mini Panel` will only be shown, if the Main Panel is hidden. There are several ways to hide the Main Panel:
   
   | 3rd Party Extension | Actions | Settings |
   | --- | --- | --- |
