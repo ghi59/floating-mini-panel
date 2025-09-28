@@ -45,7 +45,7 @@ Working most of the time with Laptops, every inch of display space is important.
 
 ---
 
-### Usage
+## Usage
 
 Simply enable Floating Mini Panel via QuickSettings menu and place it where you prefer.
 
@@ -83,7 +83,7 @@ But if you are using a "normal" extension with an indicator and experience probl
 
 ---
 
-### Coding
+## Coding
 
 This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Neither <u>deprecated functions</u> nor <u>code injections</u> are used. Further it is not very intrusive into the GNOME Shell code respective into the running system.
 
@@ -111,7 +111,7 @@ This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Nei
 
 ---
 
-### Future Enhancements
+## Future Enhancements
 
 | Feature | Status |
 | --- | --- |
@@ -120,14 +120,14 @@ This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Nei
 | Favorites menu via middle click on handle button | Not neccessary anymore, if 3rd party indicators are available in `Mini Panel` |
 | QuickSettings scroll actions (Volume, Caffeine, Workspace) | <mark>Available since Version 4</mark> |
 | Issue #4: Touchscreen support | planned |
-| Issue #5: Default Location and Predefined Locations (Top-Left,  Top-Center, Top-Right, Bottom-Left, Bottom-Center, Bottom-Right) | planned |
-| Vertical Orientation | open |
+| Issue #5: Default Location and Predefined Locations (Top-Left,  Top-Center, Top-Right, Bottom-Left, Bottom-Center, Bottom-Right) | Coding done w/o Default Location and testing ongoing. Available in version 7 |
+| Vertical Orientation | Coding done and testing ongoing. Available in version 8 |
 | Theming (Icon- & Font-Size, Spacing, etc.) | open |
 | Stabilize behavior in 'permanent mode' on Startup, Lock Screen, Suspend and Enable/Disable | <mark>Available since version 5</mark> |
 
 ---
 
-### Known Problems
+## Known Problems
 
 | Problem | Solution / Workaround |
 | --- | --- |
