@@ -1,7 +1,7 @@
 /*
- * Floating-Mini-Panel for GNOME Shell 47+
+ * Floating-Mini-Panel for GNOME Shell 46+
  *
- * Copyright 2024 Gerhard Himmel
+ * Copyright 2024, 2025 Gerhard Himmel
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +22,6 @@
 import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
-//import Shell from 'gi://Shell';
 import St from 'gi://St';
 
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -47,10 +46,13 @@ const IndicatorClone = GObject.registerClass(
                 name: 'extBtn',
                 reactive: true,
                 track_hover: true,
-                style_class: 'button',
+                style_class: 'button btn',
+                x_expand: true,
+                y_expand: true,
             });
 
             this._parent = parent;
+
             this._ind = ind;
             this._role = role;
             this._box = box;
@@ -210,15 +212,20 @@ const IndicatorClone = GObject.registerClass(
                         new St.BoxLayout({
                             x_expand: true,
                             x_align: Clutter.ActorAlign.FILL,
+                            y_expand: true,
+                            y_align: Clutter.ActorAlign.FILL,
                         })
                     );
+
                     container.add_child(this._containers[i]);
+
                     this._indContainers[i].bind_property(
                         'visible',
                         this._containers[i],
                         'visible',
                         GObject.BindingFlags.SYNC_CREATE
                     );
+
                     this._indContainers[i].connectObject(
                         'child-added',
                         (actor, child) => {
@@ -339,6 +346,8 @@ const IndicatorClone = GObject.registerClass(
             // St.Label (Extension)
             if (child.text) {
                 this._childs[j] = new St.Label({
+                    x_expand: true,
+                    x_align: Clutter.ActorAlign.CENTER,
                     y_expand: true,
                     y_align: Clutter.ActorAlign.CENTER,
                 });
@@ -349,6 +358,7 @@ const IndicatorClone = GObject.registerClass(
                     'text',
                     GObject.BindingFlags.SYNC_CREATE
                 );
+
                 this._indChilds[j].bind_property(
                     'visible',
                     this._childs[j],
@@ -358,7 +368,7 @@ const IndicatorClone = GObject.registerClass(
             }
         }
 
-        // Rmove indicator childs ----------------------------------------------
+        // Remove indicator childs ---------------------------------------------
         _removeChildFromContainer(child, container) {
             if (this._indChilds) {
                 let j = this._indChilds.indexOf(child);
@@ -443,13 +453,14 @@ const IndicatorClone = GObject.registerClass(
 
 export const IndicatorsDrawer = GObject.registerClass(
     class IndicatorsDrawer extends St.BoxLayout {
-        constructor(parent, sets) {
+        constructor(parent) {
             super({
                 name: 'IndicatorsDrawer',
             });
 
             this._parent = parent;
-            this._sets = sets;
+
+            this._sets = this._parent._sets;
             this._open = this._sets.get_boolean('open');
             this._always = this._sets.get_strv('always');
 
@@ -461,6 +472,7 @@ export const IndicatorsDrawer = GObject.registerClass(
                 x_expand: true,
                 visible: this._open,
             });
+
             this.add_child(this._drawerBox);
 
             // Content Box -----------------------------------------------------
@@ -468,6 +480,7 @@ export const IndicatorsDrawer = GObject.registerClass(
                 name: 'contentBox',
                 x_expand: true,
             });
+
             this._drawerBox.add_child(this._contentBox);
 
             // Divider Box -----------------------------------------------------
@@ -476,6 +489,7 @@ export const IndicatorsDrawer = GObject.registerClass(
                 width: 1,
                 style_class: 'divider',
             });
+
             this._drawerBox.add_child(this._dividerBox);
 
             // Always Box ------------------------------------------------------
@@ -483,6 +497,7 @@ export const IndicatorsDrawer = GObject.registerClass(
                 name: 'alwaysBox',
                 x_expand: true,
             });
+
             this.add_child(this._alwaysBox);
 
             // Show DividerBox between DrawerBox and AlwaysBox only if
@@ -603,6 +618,7 @@ export const IndicatorsDrawer = GObject.registerClass(
                     pos,
                     always
                 );
+
                 // Roles of AppIndicators are dynamic, so I show them always.
                 // I did not find any stable value in all checked apps!!!
                 // If this is unwanted someone can disable AppIndicators support
@@ -617,63 +633,23 @@ export const IndicatorsDrawer = GObject.registerClass(
 
         // Open / close Drawer Box ---------------------------------------------
         toggle() {
-            let w = this._drawerBox.width;
-            if (!this._drawerBox.visible) {
-                // Move back if possible
-                if (this._parent.x - w > 0) {
-                    let new_x = this._sets.get_int('pos-x') - w;
-                    this._parent.remove_all_transitions();
-                    this._parent.ease({
-                        x: new_x,
-                        duration: 250,
-                        mode: Clutter.AnimationMode.EASE_LINEAR,
-                        onComplete: () => {
-                            this._moveback = true;
-                        },
-                    });
+            if (this._drawerBox.visible) {
+                this._drawerBox.visible = false;
+                if (
+                    !(
+                        this._parent.x !== this._old_x &&
+                        this._parent.y !== this._old_y
+                    )
+                ) {
+                    this._parent.x = this._old_x;
+                    this._parent.y = this._old_y;
                 }
-                // Open Drawer
-                this._drawerBox.remove_all_transitions();
-                this._drawerBox.width = 0;
-                this._drawerBox.opacity = 0;
-                this._drawerBox.visible = true;
-                this._drawerBox.ease({
-                    width: w,
-                    opacity: 255,
-                    duration: 250,
-                    mode: Clutter.AnimationMode.EASE_LINEAR,
-                    onComplete: () => {
-                        this._drawerBox.width = -1;
-                        this._sets.set_boolean('open', true);
-                    },
-                });
+                this._sets.set_boolean('open', false);
             } else {
-                // Close Drawer
-                this._drawerBox.remove_all_transitions();
-                this._drawerBox.ease({
-                    width: 0,
-                    opacity: 0,
-                    duration: 250,
-                    mode: Clutter.AnimationMode.EASE_LINEAR,
-                    onComplete: () => {
-                        this._drawerBox.visible = false;
-                        this._drawerBox.width = -1;
-                        this._sets.set_boolean('open', false);
-                    },
-                });
-                // Move back if neccessary
-                if (this._moveback) {
-                    let new_x = this._sets.get_int('pos-x') + w;
-                    this._parent.remove_all_transitions();
-                    this._parent.ease({
-                        x: new_x,
-                        duration: 250,
-                        mode: Clutter.AnimationMode.EASE_LINEAR,
-                        onComplete: () => {
-                            this._moveback = false;
-                        },
-                    });
-                }
+                this._old_x = this._parent.x;
+                this._old_y = this._parent.y;
+                this._drawerBox.visible = true;
+                this._sets.set_boolean('open', true);
             }
         }
 
@@ -707,6 +683,7 @@ export const IndicatorsDrawer = GObject.registerClass(
                 RIGHTBOX.disconnect(this._prConId);
                 this._prConId = null;
             }
+            super.destroy();
         }
     }
 );

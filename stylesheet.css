@@ -1,41 +1,44 @@
 
 #FloatingMiniPanel {
-  height: 30px;
-  padding: 2px 2px;
+/*  height: 32px; */
+  height: 38px;
+  padding: 0px 0px;
 }
 
 #FloatingMiniPanel .system-status-icon {
   width: 24px;
-  padding: 7px 0px;
+/*  padding: 8px 0px; */
+  padding: 11px 0px;
   -st-icon-style: symbolic !important;
 }
 
 #FloatingMiniPanel .system-status-icon-2 {
   width: 24px;
-  padding-top: 7px;
-  padding-bottom: 7px;
-  padding-left: 6px;
+  padding-top: 11px;
+  padding-bottom: 11px;
+  padding-left: 8px;
   -st-icon-style: symbolic !important;
 }
 
 #FloatingMiniPanel .clone {
-  padding: 7px 8px;
+  padding: 8px 8px;
 }
 
 #FloatingMiniPanel .divider {
-  margin: 6px 2px;
+  margin: 6px 0px;
+  padding: 0px 0px;
   border: 1px solid grey;
 }
 
-#ctlBtn {
+#FloatingMiniPanel .ctlBtn {
   padding: 0px 2px;
 }
 
-#dateBtn, #quickBtn, #extBtn {
+#FloatingMiniPanel .btn {
   padding: 0px 8px;
 }
 
-#dateBtn .messages-indicator {
+#FloatingMiniPanel .messages-indicator {
   width: 16px;
   padding: 7px 0px;
 }
@@ -43,3 +46,4 @@
 .popup-menu.panel-menu {
   margin-bottom: 0;
 }
+
