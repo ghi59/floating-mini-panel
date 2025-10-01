@@ -10,9 +10,11 @@ Floating Mini Panel replaces the Gnome Main Panel with a movable and always-on-t
 
 ## Features
 
-- System-, Extension- and App-Indicator (<u>no legacy appicons</u>) support <mark>(new)</mark>
+- Predefined Positions, Dynamic Border Corners, Menu <mark>(new)</mark>
+
+- System-, Extension- and App-Indicator (<u>no legacy appicons</u>) support
   
-- Indicator Drawer and Always-Visible-Area <mark>(new)</mark>
+- Indicator Drawer and Always-Visible-Area
   
 - Auto Mode
   
@@ -75,6 +77,11 @@ Since version 4 there is support for System-, Extension- and App-Indicators w/o 
 - To move an indicator from the Drawer to the Always-Visible-Area and vice versa do a middle click on the indicator itself.
   
   The order of the indicators follows their order in the Main Panel. As soon as there are indicators in the Drawer and in the Always-Visible-Area and the Drawer is opened, a small divider between the two areas will be visible. Closing the Drawer, or moving all indicators out of the Drawer (which would make no sense, because someone could just leave the Drawer open with the same result) or out of the Always-Visible-Area, will hide the divider. All your customizations will be written to the extension settings and restored across sessions.
+
+Since version 7 there is support for Predefined Positions (Top-Start, Top-Center, Top-End, Bottom-Start, Bottom-Center, Bottom-End). If `Mini Panel` is aligned to screen edges the border corners (rounded, not rounded) will adjust automatically.
+If positioned to Top-Center or Bottom-Center `Mini Panel` will stay centered when its width changes (e.g. Drawer open/closed). A menu was added presenting all available actions, which all can be executed directly with mouse clicks and some modifier keys.
+
+- To open the menu do a right button longpress on the Handle Button.
   
 
 **Be aware that most but not all Extension Indicators are supported well , especially very complex indicators e.g. 'Media Controls' might have problems or missing functionality! I am working on it.**
@@ -89,7 +96,7 @@ This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Nei
 
 1. What is changed in all modes:
    - The `Mini Panel` is added (TopChrome) to the system.
-   - Unredirection is disabled.
+   - ~~Unredirection is disabled~~.
    - Custom Hotkey Handlers for DateMenu and Quicksettings menus.
    - SourceActor for DateMenu and Quicksettings menus.
    - ArrowAlignment for DateMenu and Quicksettings menus.
@@ -120,7 +127,8 @@ This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Nei
 | Favorites menu via middle click on handle button | Not neccessary anymore, if 3rd party indicators are available in `Mini Panel` |
 | QuickSettings scroll actions (Volume, Caffeine, Workspace) | <mark>Available since Version 4</mark> |
 | Issue #4: Touchscreen support | planned |
-| Issue #5: Default Location and Predefined Locations (Top-Left,  Top-Center, Top-Right, Bottom-Left, Bottom-Center, Bottom-Right) | Coding done w/o Default Location and testing ongoing. Available in version 7 |
+| Issue #5: Predefined Locations (Top-Left,  Top-Center, Top-Right, Bottom-Left, Bottom-Center, Bottom-Right) | <mark>Available since version 7</mark> |
+| Issue #5: Default Location and Edge Offset | open |
 | Vertical Orientation | Coding done and testing ongoing. Available in version 8 |
 | Theming (Icon- & Font-Size, Spacing, etc.) | open |
 | Stabilize behavior in 'permanent mode' on Startup, Lock Screen, Suspend and Enable/Disable | <mark>Available since version 5</mark> |
@@ -138,6 +146,22 @@ This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Nei
 ---
 
 ## Version History
+
+**Version 7**
+
+- Improved Realigning / Relocating
+
+- Predefined Positions
+
+- Dynamic Border Corners
+
+- Menu
+
+- Code refactored and bug fixing.
+
+- Support for GNOME 46 and 49
+
+- Style (css) changes
 
 **Version 6**
 
