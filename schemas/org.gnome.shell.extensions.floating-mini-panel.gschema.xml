@@ -22,11 +22,11 @@
         Vertical Position of floating-mini-panel.
       </description>
     </key>
-    <key name="aligned" type="b">
-      <default>false</default>
-      <summary>Right Aligned</summary>
+    <key name="aligned" type="i">
+      <default>5</default>
+      <summary>Aligned</summary>
       <description>
-        Is floating-mini-panel right aligned.
+        Is floating-mini-panel is aligned to a default position (NONE: 0, TOP: 1, BOTTOM: 2, LEFT: 4, RIGHT: 8, CENTER: 16).
       </description>
     </key>
     <key name="open" type="b">
