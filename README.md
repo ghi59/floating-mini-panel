@@ -128,7 +128,7 @@ This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Nei
 | QuickSettings scroll actions (Volume, Caffeine, Workspace) | <mark>Available since Version 4</mark> |
 | Issue #4: Touchscreen support | planned |
 | Issue #5: Predefined Locations (Top-Left,  Top-Center, Top-Right, Bottom-Left, Bottom-Center, Bottom-Right) | <mark>Available since version 7</mark> |
-| Issue #5: Default Location and Edge Offset | Coding done and testing ongoing. Available in version 8 |
+| Issue #5: Default Location and Edge Offset | Coding done and testing ongoing. Availability postponed |
 | Vertical Orientation | Coding done and testing ongoing. Available in version 8 |
 | Theming (Icon- & Font-Size, Spacing, etc.) | open |
 | Stabilize behavior in 'permanent mode' on Startup, Lock Screen, Suspend and Enable/Disable | <mark>Available since version 5</mark> |
