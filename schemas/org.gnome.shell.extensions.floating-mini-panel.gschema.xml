@@ -29,6 +29,13 @@
         Is floating-mini-panel is aligned to a default position (NONE: 0, TOP: 1, BOTTOM: 2, LEFT: 4, RIGHT: 8, CENTER: 16).
       </description>
     </key>
+    <key name="vertical" type="b">
+      <default>false</default>
+      <summary>Vertical Orientation</summary>
+      <description>
+        Is floating-mini-panel vertical oriented.
+      </description>
+    </key>
     <key name="open" type="b">
       <default>false</default>
       <summary>Drawer opened</summary>
