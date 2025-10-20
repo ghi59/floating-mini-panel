@@ -121,6 +121,10 @@ This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Nei
    - SourceActor for menus.
    - ArrowAlignment menus.
 
+
+5. What is changed additionally for Vertical Orientation:
+   - UserArrowSide for menus.
+
 ---
 
 ## Future Enhancements
