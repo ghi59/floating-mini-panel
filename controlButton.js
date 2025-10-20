@@ -29,8 +29,6 @@ import * as Config from 'resource:///org/gnome/shell/misc/config.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-import * as Utils from './utils.js';
-
 const DISPLAY = global.display;
 const OVERVIEW = Main.overview;
 
@@ -152,24 +150,30 @@ const CtlActions = GObject.registerClass(
 
         // Middle longpress action
         _middleBtnLongPress() {
+            // ORIENTATION
+            this._actor._changeOrientation();
         }
 
         // Right longpress action
         _rightBtnLongPress() {
             this._actor.menu.toggle();
         }
-        
+
         // Left click
         _leftBtnClick(state) {
             switch (state) {
                 case 0:
-                    (OVERVIEW.visible) ? OVERVIEW.toggle() : OVERVIEW.showApps();
+                    OVERVIEW.visible ? OVERVIEW.toggle() : OVERVIEW.showApps();
                     break;
                 case Clutter.ModifierType.SHIFT_MASK:
                     this._actor._doAlign(Alignment.LEFT | Alignment.TOP);
                     break;
                 case Clutter.ModifierType.CONTROL_MASK:
-                    this._actor._doAlign(Alignment.LEFT | Alignment.BOTTOM);
+                    if (this._actor[this._actor.orientStr]) {
+                        this._actor._doAlign(Alignment.RIGHT | Alignment.TOP);
+                    } else {
+                        this._actor._doAlign(Alignment.LEFT | Alignment.BOTTOM);
+                    }
                     break;
                 default:
                     break;
@@ -183,10 +187,22 @@ const CtlActions = GObject.registerClass(
                     this._parent._indsDrawer.toggle();
                     break;
                 case Clutter.ModifierType.SHIFT_MASK:
-                    this._actor._doAlign(Alignment.CENTER | Alignment.TOP);
+                    if (this._actor[this._actor.orientStr]) {
+                        this._actor._doAlign(Alignment.CENTER | Alignment.LEFT);
+                    } else {
+                        this._actor._doAlign(Alignment.CENTER | Alignment.TOP);
+                    }
                     break;
                 case Clutter.ModifierType.CONTROL_MASK:
-                    this._actor._doAlign(Alignment.CENTER | Alignment.BOTTOM);
+                    if (this._actor[this._actor.orientStr]) {
+                        this._actor._doAlign(
+                            Alignment.CENTER | Alignment.RIGHT
+                        );
+                    } else {
+                        this._actor._doAlign(
+                            Alignment.CENTER | Alignment.BOTTOM
+                        );
+                    }
                     break;
                 default:
                     break;
@@ -197,10 +213,14 @@ const CtlActions = GObject.registerClass(
         _rightBtnClick(state) {
             switch (state) {
                 case 0:
-                    this._actor._hideParent();
+                    this._parent._tmpHide();
                     break;
                 case Clutter.ModifierType.SHIFT_MASK:
-                    this._actor._doAlign(Alignment.RIGHT | Alignment.TOP);
+                    if (this._actor[this._actor.orientStr]) {
+                        this._actor._doAlign(Alignment.LEFT | Alignment.BOTTOM);
+                    } else {
+                        this._actor._doAlign(Alignment.RIGHT | Alignment.TOP);
+                    }
                     break;
                 case Clutter.ModifierType.CONTROL_MASK:
                     this._actor._doAlign(Alignment.RIGHT | Alignment.BOTTOM);
@@ -222,8 +242,7 @@ const CtlActions = GObject.registerClass(
             return true;
         }
 
-        vfunc_sequence_cancelled() {
-        }
+        vfunc_sequence_cancelled() {}
 
         destroy() {
             if (this._timeoutId) {
@@ -239,14 +258,13 @@ const MenuItem = GObject.registerClass(
     class MenuItem extends PopupMenu.PopupBaseMenuItem {
         constructor(name, hotkey, action, params) {
             super(params);
-            this.add_child(
-                new St.Label({
-                    text: name,
-                    x_expand: true,
-                    x_align: Clutter.ActorAlign.START,
-                    style: 'padding-right: 12px;',
-                })
-            );
+
+            this.side = new St.Label({
+                text: name,
+                x_expand: true,
+                x_align: Clutter.ActorAlign.START,
+            });
+            this.add_child(this.side);
             this.add_child(
                 new St.Label({
                     text: hotkey,
@@ -272,9 +290,6 @@ export const ControlButton = GObject.registerClass(
 
             this._parent = parent;
 
-            // Future Enhancement
-            this._orient = false;
-
             this.add_child(
                 new St.Icon({
                     icon_name: 'list-drag-handle-symbolic',
@@ -284,52 +299,58 @@ export const ControlButton = GObject.registerClass(
                 })
             );
 
-            // Handling for GNOME 46, 47, 48, 49
-            this.add_action(new CtlActions(this));
-
-            this.connect('scroll-event', (obj, event) => {
-                Main.wm.handleWorkspaceScroll(event);
-            });
-
             // Control Menu
             this.menu = new PopupMenu.PopupMenu(this, 0.5, St.Side.TOP);
             Main.uiGroup.add_child(this.menu.actor);
             Main.panel.menuManager.addMenu(this.menu);
             this.menu.actor.hide();
 
-            let ltTxt = this._orient ? 'Left' : 'Top';
-            let rbTxt = this._orient ? 'Right' : 'Bottom';
-
             this.menu.addMenuItem(
                 new PopupMenu.PopupSeparatorMenuItem('Auto Position')
             );
             this.menu.addMenuItem(
-                new MenuItem(ltTxt + '-Start', 'Shift + Left Click', () => {
+                new MenuItem('Top - Start', 'Shift + Left Click', () => {
                     this._doAlign(Alignment.TOP | Alignment.LEFT);
                 })
             );
             this.menu.addMenuItem(
-                new MenuItem(ltTxt + '-Center', 'Shift + Middle Click', () => {
-                    this._doAlign(Alignment.TOP | Alignment.CENTER);
+                new MenuItem('Top - Center', 'Shift + Middle Click', () => {
+                    if (this[this.orientStr]) {
+                        this._doAlign(Alignment.LEFT | Alignment.CENTER);
+                    } else {
+                        this._doAlign(Alignment.TOP | Alignment.CENTER);
+                    }
                 })
             );
             this.menu.addMenuItem(
-                new MenuItem(ltTxt + '-End', 'Shift + Right Click', () => {
-                    this._doAlign(Alignment.TOP | Alignment.RIGHT);
+                new MenuItem('Top - End', 'Shift + Right Click', () => {
+                    if (this[this.orientStr]) {
+                        this._doAlign(Alignment.BOTTOM | Alignment.LEFT);
+                    } else {
+                        this._doAlign(Alignment.TOP | Alignment.RIGHT);
+                    }
                 })
             );
             this.menu.addMenuItem(
-                new MenuItem(rbTxt + '-Start', 'Ctrl + Left Click', () => {
-                    this._doAlign(Alignment.BOTTOM | Alignment.LEFT);
+                new MenuItem('Bottom - Start', 'Ctrl + Left Click', () => {
+                    if (this[this.orientStr]) {
+                        this._doAlign(Alignment.TOP | Alignment.RIGHT);
+                    } else {
+                        this._doAlign(Alignment.BOTTOM | Alignment.LEFT);
+                    }
                 })
             );
             this.menu.addMenuItem(
-                new MenuItem(rbTxt + '-Center', 'Ctrl + Middle Click', () => {
-                    this._doAlign(Alignment.BOTTOM | Alignment.CENTER);
+                new MenuItem('Bottom - Center', 'Ctrl + Middle Click', () => {
+                    if (this[this.orientStr]) {
+                        this._doAlign(Alignment.RIGHT | Alignment.CENTER);
+                    } else {
+                        this._doAlign(Alignment.BOTTOM | Alignment.CENTER);
+                    }
                 })
             );
             this.menu.addMenuItem(
-                new MenuItem(rbTxt + '-End', 'Ctrl + Right Click', () => {
+                new MenuItem('Bottom - End', 'Ctrl + Right Click', () => {
                     this._doAlign(Alignment.BOTTOM | Alignment.RIGHT);
                 })
             );
@@ -339,7 +360,7 @@ export const ControlButton = GObject.registerClass(
             );
             this.menu.addMenuItem(
                 new MenuItem('Show AppGrid', 'Left Click', () => {
-                    (!OVERVIEW.visible) ? OVERVIEW.toggle() : OVERVIEW.showApps();
+                    !OVERVIEW.visible ? OVERVIEW.toggle() : OVERVIEW.showApps();
                 })
             );
             this.menu.addMenuItem(
@@ -348,8 +369,8 @@ export const ControlButton = GObject.registerClass(
                 })
             );
             this.menu.addMenuItem(
-                new MenuItem('Hide', 'Right Click', () => {
-                    this._hideParent();
+                new MenuItem('Hide For 5 Seconds', 'Right Click', () => {
+                    this._parent._tmpHide();
                 })
             );
             this.menu.addMenuItem(
@@ -357,21 +378,14 @@ export const ControlButton = GObject.registerClass(
                     reactive: false,
                 })
             );
-            /* FUTURE ENHANCEMENT
-            this.menu.addMenuItem(new MenuItem('Toggle Orientation', 'Middle LongPress', () => {
-            }));
-            */
+            this.menu.addMenuItem(
+                new MenuItem('Toggle Orientation', 'Middle LongPress', () => {
+                    this._changeOrientation();
+                })
+            );
             this.menu.addMenuItem(
                 new MenuItem('Toggle Menu', 'Right LongPress', () => {})
             );
-            /* FUTURE ENHANCEMENT
-            this.menu.addMenuItem(new MenuItem('Default Position', 'Shift + Ctrl + Left Click', () => {
-            }));
-            this.menu.addMenuItem(new MenuItem('Set Default Position', 'Shift + Ctrl + Middle Click', () => {
-            }));
-            this.menu.addMenuItem(new MenuItem('Toggle Edge Offset', 'Shift + Ctrl + Right Click', () => {
-            }));
-            */
 
             this.menu.connect('open-state-changed', () => {
                 if (this.has_style_pseudo_class('active')) {
@@ -381,6 +395,42 @@ export const ControlButton = GObject.registerClass(
                 }
                 return GLib.SOURCE_PROPAGATE;
             });
+
+            // START CODE VERTICAL
+            this.orientStr = shellVersion > 47 ? 'orientation' : 'vertical';
+            this._parent.bind_property_full(
+                this.orientStr,
+                this,
+                this.orientStr,
+                GObject.BindingFlags.SYNC_CREATE,
+                (binding, value) => {
+                    if (value) {
+                        this.ltTxt = 'Left';
+                        this.rbTxt = 'Right';
+                        this.menu._boxPointer._userArrowSide = St.Side.LEFT;
+                    } else {
+                        this.ltTxt = 'Top';
+                        this.rbTxt = 'Bottom';
+                        this.menu._boxPointer._userArrowSide = St.Side.TOP;
+                    }
+                    let items = this.menu._getMenuItems();
+                    items[1].side.text = this.ltTxt + ' - Start';
+                    items[2].side.text = this.ltTxt + ' - Center';
+                    items[3].side.text = this.ltTxt + ' - End';
+                    items[4].side.text = this.rbTxt + ' - Start';
+                    items[5].side.text = this.rbTxt + ' - Center';
+                    items[6].side.text = this.rbTxt + ' - End';
+                    return [binding, value];
+                },
+                null
+            );
+
+            // Handling for GNOME 46, 47, 48, 49
+            this.add_action(new CtlActions(this));
+
+            this.connect('scroll-event', (obj, event) => {
+                Main.wm.handleWorkspaceScroll(event);
+            });
         }
 
         _doAlign(align) {
@@ -388,27 +438,29 @@ export const ControlButton = GObject.registerClass(
             this._parent._relocate(false);
         }
 
-        _hideParent() {
-            // Hide this for 5 sec.
-            this._parent.hide();
-            if (this._timeoutId) {
-                GLib.Source.remove(this._timeoutId);
-                this._timeoutId = null;
-            }
-            this._timeoutId = GLib.timeout_add(
-                GLib.PRIORITY_DEFAULT,
-                5000,
-                () => {
-                    if (
-                        // Bug fix v5
-                        Utils.panelBoxHidden() &&
-                        !OVERVIEW.visible
-                    )
-                        this._parent.show();
-                    this._timeoutId = null;
-                    return GLib.SOURCE_REMOVE;
+        // START CODE VERTICAL
+        _changeOrientation() {
+            this._doAlign(Alignment.NONE);
+
+            if (this._parent.width > this._parent.height) {
+                this._parent._sets.set_boolean('vertical', true);
+                if (shellVersion > 47) {
+                    this._parent.orientation = Clutter.Orientation.VERTICAL;
+                } else {
+                    this._parent.vertical = true;
                 }
-            );
+                this._parent.remove_style_pseudo_class('horizontal');
+                this._parent.add_style_pseudo_class('vertical');
+            } else {
+                this._parent._sets.set_boolean('vertical', false);
+                if (shellVersion > 47) {
+                    this._parent.orientation = Clutter.Orientation.HORIZONTAL;
+                } else {
+                    this._parent.vertical = false;
+                }
+                this._parent.remove_style_pseudo_class('vertical');
+                this._parent.add_style_pseudo_class('horizontal');
+            }
         }
 
         destroy() {

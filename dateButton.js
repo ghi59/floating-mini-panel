@@ -25,12 +25,15 @@ import GObject from 'gi://GObject';
 import Shell from 'gi://Shell';
 import St from 'gi://St';
 
+import * as Config from 'resource:///org/gnome/shell/misc/config.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 const PANELBOX = Main.layoutManager.panelBox;
 const DATEMENU = Main.panel.statusArea['dateMenu'];
 const DATESOURCEACTOR = DATEMENU.menu.sourceActor;
 const DATEARROWALIGNMENT = DATEMENU.menu._arrowAlignment;
+
+const shellVersion = parseFloat(Config.PACKAGE_VERSION);
 
 export const DateButton = GObject.registerClass(
     class DateButton extends St.BoxLayout {
@@ -44,14 +47,38 @@ export const DateButton = GObject.registerClass(
 
             this._parent = parent;
 
+            // START CODE VERTICAL
+            this.orientStr = shellVersion > 47 ? 'orientation' : 'vertical';
+
+            this._parent.bind_property_full(
+                this.orientStr,
+                this,
+                this.orientStr,
+                GObject.BindingFlags.SYNC_CREATE,
+                (binding, value) => {
+                    if (value) {
+                        DATEMENU.menu._boxPointer._userArrowSide = St.Side.LEFT;
+                    } else {
+                        DATEMENU.menu._boxPointer._userArrowSide = St.Side.TOP;
+                    }
+                    return [binding, value];
+                },
+                null
+            );
+
             this.connect('notify::mapped', () => {
                 DATEMENU.menu.close();
                 if (this.mapped) {
                     DATEMENU.menu.sourceActor = this;
                     DATEMENU.menu._arrowAlignment = 0.5;
+                    // START CODE VERTICAL
+                    if (this[this.orientStr])
+                        DATEMENU.menu._boxPointer._userArrowSide = St.Side.LEFT;
                 } else {
                     DATEMENU.menu.sourceActor = DATESOURCEACTOR;
                     DATEMENU.menu._arrowAlignment = DATEARROWALIGNMENT;
+                    // START CODE VERTICAL
+                    DATEMENU.menu._boxPointer._userArrowSide = St.Side.TOP;
                 }
             });
 
@@ -68,8 +95,34 @@ export const DateButton = GObject.registerClass(
                 return GLib.SOURCE_PROPAGATE;
             });
 
+            // START CODE VERTICAL
+            function formatDate(vertical) {
+                let dateStr = DATEMENU._clockDisplay.text;
+                if (vertical) {
+                    // Divide date from time and replace spaces with newlines
+                    dateStr = dateStr
+                        .replace(/\u2002/g, '\n――\n')
+                        .replace(/\s/g, '\n');
+                    // Seconds are active
+                    if (
+                        dateStr.split(':').length > 2 ||
+                        dateStr.split('∶').length > 2
+                    ) {
+                        dateStr = dateStr.replace(/:|∶/g, '\n𐤟 𐤟\n');
+                    } else {
+                        dateStr = dateStr.replace(/\n――/g, '');
+                    }
+                    // If 12h mode
+                    dateStr = dateStr.replace(/\n\n/g, '\n');
+                    // If 12h mode and time only
+                    if (dateStr[0] === '\n') dateStr = dateStr.substring(1);
+                }
+                return dateStr;
+            }
+
             this._dateLabel = new St.Label({
-                text: DATEMENU._clockDisplay.text,
+                // START CODE VERTICAL
+                text: formatDate(this[this.orientStr]),
                 x_expand: true,
                 x_align: Clutter.ActorAlign.CENTER,
                 y_expand: true,
@@ -78,11 +131,21 @@ export const DateButton = GObject.registerClass(
             });
             this.add_child(this._dateLabel);
 
-            this._dateConId = DATEMENU._clockDisplay.bind_property(
+            // START CODE VERTICAL
+            this.connect('notify::' + this.orientStr, () => {
+                this._dateLabel.text = formatDate(this[this.orientStr]);
+            });
+
+            this._dateConId = DATEMENU._clockDisplay.bind_property_full(
                 'text',
                 this._dateLabel,
                 'text',
-                GObject.Binding.CREATE_SYNC
+                GObject.Binding.CREATE_SYNC,
+                // START CODE VERTICAL
+                () => {
+                    return [String, formatDate(this[this.orientStr])];
+                },
+                null
             );
 
             this._noteIcon = new St.Icon({

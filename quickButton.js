@@ -25,12 +25,15 @@ import GObject from 'gi://GObject';
 import Shell from 'gi://Shell';
 import St from 'gi://St';
 
+import * as Config from 'resource:///org/gnome/shell/misc/config.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 const PANELBOX = Main.layoutManager.panelBox;
 const QUICKSETTINGS = Main.panel.statusArea['quickSettings'];
 const QUICKSOURCEACTOR = QUICKSETTINGS.menu.sourceActor;
 const QUICKARROWALIGNMENT = QUICKSETTINGS.menu._arrowAlignment;
+
+const shellVersion = parseFloat(Config.PACKAGE_VERSION);
 
 export const QuickButton = GObject.registerClass(
     class QuickButton extends St.BoxLayout {
@@ -44,14 +47,40 @@ export const QuickButton = GObject.registerClass(
 
             this._parent = parent;
 
+            // START CODE VERTICAL
+            this.orientStr = shellVersion > 47 ? 'orientation' : 'vertical';
+            this._parent.bind_property_full(
+                this.orientStr,
+                this,
+                this.orientStr,
+                GObject.BindingFlags.SYNC_CREATE,
+                (binding, value) => {
+                    if (value) {
+                        QUICKSETTINGS.menu._boxPointer._userArrowSide =
+                            St.Side.LEFT;
+                    } else {
+                        QUICKSETTINGS.menu._boxPointer._userArrowSide =
+                            St.Side.TOP;
+                    }
+                    return [binding, value];
+                },
+                null
+            );
+
             this.connect('notify::mapped', () => {
                 QUICKSETTINGS.menu.close();
                 if (this.mapped) {
                     QUICKSETTINGS.menu.sourceActor = this;
                     QUICKSETTINGS.menu._arrowAlignment = 0.5;
+                    // START CODE VERTICAL
+                    if (this[this.orientStr])
+                        QUICKSETTINGS.menu._boxPointer._userArrowSide =
+                            St.Side.LEFT;
                 } else {
                     QUICKSETTINGS.menu.sourceActor = QUICKSOURCEACTOR;
                     QUICKSETTINGS.menu._arrowAlignment = QUICKARROWALIGNMENT;
+                    // START CODE VERTICAL
+                    QUICKSETTINGS.menu._boxPointer._userArrowSide = St.Side.TOP;
                 }
             });
 

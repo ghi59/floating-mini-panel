@@ -24,6 +24,7 @@ import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
 import St from 'gi://St';
 
+import * as Config from 'resource:///org/gnome/shell/misc/config.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 
 const PANEL = Main.panel;
@@ -32,6 +33,8 @@ const STATUSAREA = PANEL.statusArea;
 const LEFTBOX = PANEL._leftBox;
 const CENTERBOX = PANEL._centerBox;
 const RIGHTBOX = PANEL._rightBox;
+
+const shellVersion = parseFloat(Config.PACKAGE_VERSION);
 
 const Box = {
     LEFT: 0,
@@ -71,6 +74,32 @@ const IndicatorClone = GObject.registerClass(
                 this,
                 'visible',
                 GObject.BindingFlags.SYNC_CREATE
+            );
+
+            // START CODE VERTICAL
+            this.orientStr = shellVersion > 47 ? 'orientation' : 'vertical';
+
+            this._parent.bind_property_full(
+                this.orientStr,
+                this,
+                this.orientStr,
+                GObject.BindingFlags.SYNC_CREATE,
+                (binding, value) => {
+                    // Adjust indicators text for horizontal / vertical
+                    // otherwise it would take some time until this happens,
+                    // depending on update frequency and/or value changes.
+                    for (let c of this._childs) {
+                        if (c.text) {
+                            if (value) {
+                                c.text = c.text.replace(/\s/g, '\n');
+                            } else {
+                                c.text = c.text.replace(/\n/g, ' ');
+                            }
+                        }
+                    }
+                    return [binding, value];
+                },
+                null
             );
 
             // Get indicator menu properties -----------------------------------
@@ -128,6 +157,31 @@ const IndicatorClone = GObject.registerClass(
             // triggered by visibility (mapped)
             this.connect('notify::mapped', () => {
                 this._toggleMenuProps(this.mapped);
+            });
+
+            // START CODE VERTICAL
+            this.connect_after('notify::' + this.orientStr, () => {
+                if (this._ind.menu) {
+                    if (this[this.orientStr]) {
+                        this._ind.menu._boxPointer._userArrowSide =
+                            St.Side.LEFT;
+                    } else {
+                        this._ind.menu._boxPointer._userArrowSide = St.Side.TOP;
+                    }
+                }
+                if (this._ind.arcMenu) {
+                    if (this[this.orientStr]) {
+                        this._ind.arcMenu._boxPointer._userArrowSide =
+                            St.Side.LEFT;
+                        this._ind.arcMenuContextMenu._boxPointer._userArrowSide =
+                            St.Side.LEFT;
+                    } else {
+                        this._ind.arcMenu._boxPointer._userArrowSide =
+                            St.Side.TOP;
+                        this._ind.arcMenuContextMenu._boxPointer._userArrowSide =
+                            St.Side.TOP;
+                    }
+                }
             });
 
             // Connect actions -------------------------------------------------
@@ -223,6 +277,14 @@ const IndicatorClone = GObject.registerClass(
                         'visible',
                         this._containers[i],
                         'visible',
+                        GObject.BindingFlags.SYNC_CREATE
+                    );
+
+                    // START CODE VERTICAL
+                    this.bind_property(
+                        this.orientStr,
+                        this._containers[i],
+                        this.orientStr,
                         GObject.BindingFlags.SYNC_CREATE
                     );
 
@@ -352,13 +414,19 @@ const IndicatorClone = GObject.registerClass(
                     y_align: Clutter.ActorAlign.CENTER,
                 });
                 container.add_child(this._childs[j]);
-                this._indChilds[j].bind_property(
+                this._indChilds[j].bind_property_full(
                     'text',
                     this._childs[j],
                     'text',
-                    GObject.BindingFlags.SYNC_CREATE
+                    GObject.BindingFlags.SYNC_CREATE,
+                    // START CODE VERTICAL
+                    (binding, value) => {
+                        if (this[this.orientStr])
+                            value = value.replace(/\s/g, '\n');
+                        return [binding, value];
+                    },
+                    null
                 );
-
                 this._indChilds[j].bind_property(
                     'visible',
                     this._childs[j],
@@ -390,9 +458,15 @@ const IndicatorClone = GObject.registerClass(
                 if (on) {
                     this._ind.menu.sourceActor = this;
                     this._ind.menu._arrowAlignment = 0.5;
+                    // START CODE VERTICAL
+                    if (this[this.orientStr])
+                        this._ind.menu._boxPointer._userArrowSide =
+                            St.Side.LEFT;
                 } else {
                     this._ind.menu.sourceActor = this._indActor;
                     this._ind.menu.arrowAlignment = this._indArrow;
+                    // START CODE VERTICAL
+                    this._ind.menu._boxPointer._userArrowSide = St.Side.TOP;
                 }
             } else {
                 // Support for ArcMenu
@@ -402,6 +476,13 @@ const IndicatorClone = GObject.registerClass(
                         this._ind.arcMenu._arrowAlignment = 0.5;
                         this._ind.arcMenuContextMenu.sourceActor = this;
                         this._ind.arcMenuContextMenu._arrowAlignment = 0.5;
+                        // START CODE VERTICAL
+                        if (this[this.orientStr]) {
+                            this._ind.arcMenu._boxPointer._userArrowSide =
+                                St.Side.LEFT;
+                            this._ind.arcMenuContextMenu._boxPointer._userArrowSide =
+                                St.Side.LEFT;
+                        }
                     } else {
                         this._ind.arcMenu.sourceActor = this._indActor;
                         this._ind.arcMenu.arrowAlignment = this._indArrow;
@@ -409,6 +490,11 @@ const IndicatorClone = GObject.registerClass(
                             this._indActor;
                         this._ind.arcMenuContextMenu.arrowAlignment =
                             this._indArrow;
+                        // START CODE VERTICAL
+                        this._ind.arcMenu._boxPointer._userArrowSide =
+                            St.Side.TOP;
+                        this._ind.arcMenuContextMenu._boxPointer._userArrowSide =
+                            St.Side.TOP;
                     }
                 }
             }
@@ -516,6 +602,46 @@ export const IndicatorsDrawer = GObject.registerClass(
                     } else {
                         return [Number, 0];
                     }
+                },
+                null
+            );
+
+            // START CODE VERTICAL
+            this._alwaysBox.bind_property_full(
+                'height',
+                this._dividerBox,
+                'opacity',
+                GObject.BindingFlags.DEFAULT,
+                () => {
+                    if (
+                        this._alwaysBox.height > 1 &&
+                        this._contentBox.height > 1
+                    ) {
+                        return [Number, 255];
+                    } else {
+                        return [Number, 0];
+                    }
+                },
+                null
+            );
+
+            // START CODE VERTICAL
+            this.orientStr = shellVersion > 47 ? 'orientation' : 'vertical';
+
+            this._parent.bind_property_full(
+                this.orientStr,
+                this,
+                this.orientStr,
+                GObject.BindingFlags.SYNC_CREATE,
+                (binding, value) => {
+                    this._drawerBox[this.orientStr] = value;
+                    this._contentBox[this.orientStr] = value;
+                    this._dividerBox[this.orientStr] = value;
+                    this._alwaysBox[this.orientStr] = value;
+                    // Important for orientation change with open drawer!
+                    this._old_x = this._parent.x;
+                    this._old_y = this._parent.y;
+                    return [binding, value];
                 },
                 null
             );

@@ -17,20 +17,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-// comments - ONGOING - version 7
-// connectObject - PARTLY DONE - version 7
-// quickSettings more commonly - version 7
-// compact code - version 7
-// object naming - version 7
-
 'use strict';
 
 import Clutter from 'gi://Clutter';
 import GLib from 'gi://GLib';
 import GObject from 'gi://GObject';
+// Issue #10
+import Meta from 'gi://Meta';
 import Mtk from 'gi://Mtk';
 import St from 'gi://St';
 
+import * as Config from 'resource:///org/gnome/shell/misc/config.js';
 import {Extension} from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as LoginManager from 'resource:///org/gnome/shell/misc/loginManager.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
@@ -53,6 +50,8 @@ const PANELBOX = LAYOUTMANAGER.panelBox;
 const OVERVIEW = Main.overview;
 const DISPLAY = global.display;
 const QUICKSETTINGS = PANEL.statusArea['quickSettings'];
+
+const shellVersion = parseFloat(Config.PACKAGE_VERSION);
 
 // Panel-Hiding Extensions
 const DTP_UUID = 'dash-to-panel@jderose9.github.com';
@@ -84,6 +83,9 @@ const FloatingMiniPanel = GObject.registerClass(
                 visible: false,
             });
 
+            // Issue #10
+            this._enaUnredirectFunc = null;
+
             this._sets = sets;
             this._state = this._sets.get_int('state');
 
@@ -91,6 +93,26 @@ const FloatingMiniPanel = GObject.registerClass(
                 this._sets.get_int('pos-x'),
                 this._sets.get_int('pos-y')
             );
+
+            // START CODE VERTICAL
+            this.orientStr = (shellVersion > 47) ? 'orientation' : 'vertical';
+
+            if (this._sets.get_boolean('vertical')) {
+                if (shellVersion > 47) {
+                    this.orientation = Clutter.Orientation.VERTICAL;
+                } else {
+                    this.vertical = true;
+                }
+                this.add_style_pseudo_class('vertical');
+            } else {
+                if (shellVersion > 47) {
+                    this.orientation = Clutter.Orientation.HORIZONTAL;
+                } else {
+                    this.vertical = false;
+                }
+                this.add_style_pseudo_class('horizontal');
+            }
+            // END CODE VERTICAL
 
             this._panelHidingExts = [];
 
@@ -229,12 +251,12 @@ const FloatingMiniPanel = GObject.registerClass(
                         // used by 'HideTopPanel' and 'DashToPanel' and
                         // PanelBox.visible signal by itself is not sufficiant
                         // to decide if the PanelBox is really shown or not!
-                        if (this._timeoutId) {
-                            GLib.Source.remove(this._timeoutId);
-                            this._timeoutId = null;
+                        if (this._timeoutId1) {
+                            GLib.Source.remove(this._timeoutId1);
+                            this._timeoutId1 = null;
                         }
                         // A timeout of 50ms seams ok, but has to be verified.
-                        this._timeoutId = GLib.timeout_add(
+                        this._timeoutId1 = GLib.timeout_add(
                             GLib.PRIORITY_DEFAULT,
                             50,
                             () => {
@@ -258,7 +280,7 @@ const FloatingMiniPanel = GObject.registerClass(
                                     PANELBOX.visible = false;
                                     this._correctPanelBoxVisibleState = true;
                                 }
-                                this._timeoutId = null;
+                                this._timeoutId1 = null;
                                 return GLib.SOURCE_REMOVE;
                             }
                         );
@@ -267,13 +289,27 @@ const FloatingMiniPanel = GObject.registerClass(
                 return Clutter.Event_PROPAGATE;
             });
 
-            this.connect('notify::width', () => {
-                GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
-                    if (this.visible) this._relocate(false);
-                    return GLib.SOURCE_REMOVE;
-                });
-                return Clutter.Event_STOP;
-            });
+            this.connect_object(
+                'notify::width',
+                () => {
+                    GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                        if (this.visible) this._relocate(false);
+                        return GLib.SOURCE_REMOVE;
+                    });
+                    return Clutter.Event_STOP;
+                },
+                // START CODE VERTICAL
+                'notify::height',
+                () => {
+                    GLib.idle_add(GLib.PRIORITY_DEFAULT, () => {
+                        if (this.visible) this._relocate(false);
+                        return GLib.SOURCE_REMOVE;
+                    });
+                    return Clutter.Event_STOP;
+                },
+                // END CODE VERTICAL
+                this
+            );
 
             this._wcConId = DISPLAY.connect('workareas-changed', () => {
                 this._relocate(false);
@@ -349,6 +385,21 @@ const FloatingMiniPanel = GObject.registerClass(
 
             // Complete startup
             LAYOUTMANAGER.addTopChrome(this, {trackFullscreen: false});
+
+            // Issue #10
+            // Absolutely necessary code! If 'unredirect' is not disabled, this
+            // will become unvisible if any app is maximized / in fullscreen.
+            if (this._enaUnredirectFunc === null) {
+                if (shellVersion > 47) {
+                    this._enaUnredirectFunc = global.compositor.enable_unredirect;
+                    global.compositor.enable_unredirect = function () {};
+                    global.compositor.disable_unredirect();
+                } else {
+	                this._enaUnredirectFunc = Meta.enable_unredirect_for_display;
+	                Meta.enable_unredirect_for_display = function(display) {};
+	                Meta.disable_unredirect_for_display(global.display);
+	            }
+            }
 
             // If this is in 'permanent mode' and disabled/enabled during
             // runtime (not accross sessions!) or screen is unlocked.
@@ -477,6 +528,29 @@ const FloatingMiniPanel = GObject.registerClass(
             }
         }
 
+        _tmpHide() {
+            // Hide this for 5 sec.
+            this.hide();
+            if (this._timeoutId2) {
+                GLib.Source.remove(this._timeoutId2);
+                this._timeoutId2 = null;
+            }
+            this._timeoutId2 = GLib.timeout_add(
+                GLib.PRIORITY_DEFAULT,
+                5000,
+                () => {
+                    if (
+                        // Bug fix v5
+                        Utils.panelBoxHidden() &&
+                        !OVERVIEW.visible
+                    )
+                        this.show();
+                    this._timeoutId2 = null;
+                    return GLib.SOURCE_REMOVE;
+                }
+            );
+        }
+
         _showFloatingMiniPanel() {
             // If in Permanent Mode hide the Main Panel
             if (this._state !== State.AUTO) {
@@ -526,17 +600,6 @@ const FloatingMiniPanel = GObject.registerClass(
 
             let align = Alignment.NONE;
 
-            if (rect.x < geom.x) {
-                rect.x = geom.x;
-                align |= Alignment.LEFT;
-            }
-
-            let max_x = geom.x + geom.width - rect.width;
-            if (rect.x > max_x) {
-                rect.x = max_x;
-                align |= Alignment.RIGHT;
-            }
-
             if (rect.y < geom.y) {
                 rect.y = geom.y;
                 align |= Alignment.TOP;
@@ -548,6 +611,17 @@ const FloatingMiniPanel = GObject.registerClass(
                 align |= Alignment.BOTTOM;
             }
 
+            if (rect.x < geom.x) {
+                rect.x = geom.x;
+                align |= Alignment.LEFT;
+            }
+
+            let max_x = geom.x + geom.width - rect.width;
+            if (rect.x > max_x) {
+                rect.x = max_x;
+                align |= Alignment.RIGHT;
+            }
+
             if (setAlign) {
                 this._sets.set_int('aligned', align);
             } else {
@@ -555,9 +629,12 @@ const FloatingMiniPanel = GObject.registerClass(
                 if (align & Alignment.TOP) rect.y = geom.y;
                 if (align & Alignment.BOTTOM) rect.y = max_y;
                 if (align & Alignment.LEFT) rect.x = geom.x;
-                if (align & Alignment.CENTER) rect.x = max_x / 2;
-                if (align & Alignment.RIGHT) {
-                    rect.x = max_x;
+                if (align & Alignment.RIGHT) rect.x = max_x;
+                if (this[this.orientStr]) {
+                    if (align & Alignment.CENTER) rect.y = geom.y + (geom.height - rect.height) / 2;
+                } else {
+                    // BUG: 'max_x / 2' which is '(geom.x + geom.width - rect.width) / 2' was used !!!
+                    if (align & Alignment.CENTER) rect.x = geom.x + (geom.width - rect.width) / 2;
                 }
             }
 
@@ -569,21 +646,14 @@ const FloatingMiniPanel = GObject.registerClass(
         }
 
         _adjustBorder(align) {
-            // Adjust rounded borders
             switch (align) {
-                case Alignment.LEFT:
-                    this.style = 'border-radius: 0px 15px 15px 0px;';
-                    break;
                 case Alignment.LEFT | Alignment.TOP:
                     this.style = 'border-radius: 0px 0px 15px 0px;';
                     break;
                 case Alignment.LEFT | Alignment.BOTTOM:
                     this.style = 'border-radius: 0px 15px 0px 0px;';
                     break;
-                case Alignment.RIGHT:
-                    this.style = 'border-radius: 15px 0px 0px 15px;';
-                    break;
-                case Alignment.RIGHT | Alignment.TOP:
+               case Alignment.RIGHT | Alignment.TOP:
                     this.style = 'border-radius: 0px 0px 0px 15px;';
                     break;
                 case Alignment.RIGHT | Alignment.BOTTOM:
@@ -596,6 +666,14 @@ const FloatingMiniPanel = GObject.registerClass(
                 case Alignment.BOTTOM:
                 case Alignment.BOTTOM | Alignment.CENTER:
                     this.style = 'border-radius: 15px 15px 0px 0px;';
+                    break;
+                case Alignment.LEFT:
+                case Alignment.LEFT | Alignment.CENTER:
+                    this.style = 'border-radius: 0px 15px 15px 0px;';
+                    break;
+                case Alignment.RIGHT:
+                case Alignment.RIGHT | Alignment.CENTER:
+                    this.style = 'border-radius: 15px 0px 0px 15px;';
                     break;
                 default:
                     this.style = null;
@@ -611,9 +689,14 @@ const FloatingMiniPanel = GObject.registerClass(
             this._dateBtn.destroy();
             this._quickBtn.destroy();
 
-            if (this._timeoutId) {
-                GLib.Source.remove(this._timeoutId);
-                this._timeoutId = null;
+            if (this._timeoutId1) {
+                GLib.Source.remove(this._timeoutId1);
+                this._timeoutId1 = null;
+            }
+
+            if (this._timeoutId2) {
+                GLib.Source.remove(this._timeoutId2);
+                this._timeoutId2 = null;
             }
 
             PANELBOX.disconnect(this._pvConId);
@@ -647,6 +730,18 @@ const FloatingMiniPanel = GObject.registerClass(
 
             LAYOUTMANAGER.removeChrome(this);
 
+            // Issue #10
+            if (this._enaUnredirectFunc !== null) {
+                if (shellVersion > 47) {
+                    global.compositor.enable_unredirect = this._enaUnredirectFunc;
+                    global.compositor.enable_unredirect();
+                } else {
+        	            Meta.enable_unredirect_for_display = this._enaUnredirectFunc;
+    	                Meta.enable_unredirect_for_display(global.display);
+    	            }
+	            this._enaUnredirectFunc = null;
+	        }
+
             this._preparePermanentMode(false);
 
             super.destroy();
@@ -660,7 +755,7 @@ export default class FloatingMiniPanelExtension extends Extension {
         startupComplete = false;
     }
 
-    enable() {
+    enable() {            
         this._floatingMiniPanel = new FloatingMiniPanel(this.getSettings());
     }
 

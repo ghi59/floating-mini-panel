@@ -1,18 +1,29 @@
 
-#FloatingMiniPanel {
+#FloatingMiniPanel:horizontal {
 /*  height: 32px; */
-  height: 38px;
+  height: 36px;
   padding: 0px 0px;
 }
 
-#FloatingMiniPanel .system-status-icon {
+#FloatingMiniPanel:vertical {
+  width: 48px;
+  padding: 0px 0px;
+}
+
+#FloatingMiniPanel:horizontal .system-status-icon {
   width: 24px;
 /*  padding: 8px 0px; */
-  padding: 11px 0px;
+  padding: 10px 0px;
   -st-icon-style: symbolic !important;
 }
 
-#FloatingMiniPanel .system-status-icon-2 {
+#FloatingMiniPanel:vertical .system-status-icon {
+  height: 24px;
+  padding: 0px 16px;
+  -st-icon-style: symbolic !important;
+}
+
+#FloatingMiniPanel:horizontal .system-status-icon-2 {
   width: 24px;
   padding-top: 11px;
   padding-bottom: 11px;
@@ -20,27 +31,58 @@
   -st-icon-style: symbolic !important;
 }
 
+#FloatingMiniPanel:vertical .system-status-icon-2 {
+  height: 24px;
+  padding-left: 16px;
+  padding-right: 16px;
+  padding-top: 8px;
+  -st-icon-style: symbolic !important;
+}
+
 #FloatingMiniPanel .clone {
   padding: 8px 8px;
 }
 
-#FloatingMiniPanel .divider {
+#FloatingMiniPanel:horizontal .divider {
   margin: 6px 0px;
   padding: 0px 0px;
   border: 1px solid grey;
 }
 
-#FloatingMiniPanel .ctlBtn {
+#FloatingMiniPanel:vertical .divider {
+  margin: 0px 6px;
+  padding: 0px 0px;
+  border: 1px solid grey;
+}
+
+#FloatingMiniPanel:horizontal .ctlBtn {
   padding: 0px 2px;
 }
 
-#FloatingMiniPanel .btn {
+#FloatingMiniPanel:vertical .ctlBtn {
+  padding: 2px 0px;
+}
+
+#FloatingMiniPanel:horizontal .btn {
   padding: 0px 8px;
 }
 
-#FloatingMiniPanel .messages-indicator {
+#FloatingMiniPanel:vertical .btn {
+  padding: 8px 0px;
+}
+
+#FloatingMiniPanel:horizontal .messages-indicator {
   width: 16px;
   padding: 7px 0px;
+}
+
+#FloatingMiniPanel:vertical .messages-indicator {
+  height: 16px;
+  padding: 0px 7px;
+}
+
+#FloatingMiniPanel:vertical StLabel {
+  text-align: center;
 }
 
 .popup-menu.panel-menu {
