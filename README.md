@@ -138,8 +138,8 @@ This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Nei
 | Issue #4: Touchscreen support | planned |
 | Issue #5: Predefined Locations (Top-Left,  Top-Center, Top-Right, Bottom-Left, Bottom-Center, Bottom-Right) | <mark>Available since version 7</mark> |
 | Issue #5: Default Location and Edge Offset | Coding done and testing ongoing. Availability postponed |
-| Vertical Orientation | Available since version 8 |
-| Theming (Icon- & Font-Size, Spacing, etc.) | open |
+| Vertical Orientation | <mark>Available since version 8</mark> |
+| Issue #11: Theming (Light/Dark, Icon- & Font-Size, Spacing, etc.) | open |
 | Stabilize behavior in 'permanent mode' on Startup, Lock Screen, Suspend and Enable/Disable | <mark>Available since version 5</mark> |
 
 ---
