@@ -1,4 +1,4 @@
-# Floating Mini Panel GNOME Shell Extension
+# [<img src="img/fmp.png" width="48"/>](img/fmp.png)  Floating Mini Panel GNOME Shell Extension
 
 ## Introduction
 
