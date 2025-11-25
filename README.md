@@ -141,8 +141,8 @@ This extension mainly relies on <u>Property Bindings</u> and <u>Signals</u>. Nei
 | Vertical Orientation | <mark>Available since version 8</mark> |
 | Issue #11: Theming (Light/Dark, Icon- & Font-Size, Spacing, etc.) | Coding ongoing |
 | Stabilize behavior in 'permanent mode' on Startup, Lock Screen, Suspend and Enable/Disable | <mark>Available since version 5</mark> |
-| Settings | Planned |
-| Issue #12 - Keyboard Shortcut for hiding the floating panel | Planned |
+| Settings | Coding ongoing |
+| Issue #12 - Keyboard Shortcut for hiding the floating panel | Coding ongoing |
 
 ---
 
